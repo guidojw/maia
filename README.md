@@ -1,0 +1,2 @@
+# maya
+VPS configuration files
