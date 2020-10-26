@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:2.1
+    container_name: traefik
+    restart: unless-stopped
+    networks:
+      - default
+      - nsadmin_production_default
+      - docker_registry_default
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/traefik.yml
+      - ./acme.json:/acme.json
+      - ./dynamic:/dynamic/
+
+networks:
+  nsadmin_production_default:
+    external: true
+  docker_registry_default:
+    external: true

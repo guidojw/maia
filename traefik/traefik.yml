@@ -1,0 +1,31 @@
+entryPoints:
+  http:
+    address: :80
+  https:
+    address: :443
+
+providers:
+  providersThrottleDuration: 2s
+  docker:
+    watch: true
+    endpoint: unix:///var/run/docker.sock
+    swarmModeRefreshSeconds: 15s
+    exposedByDefault: false
+  file:
+    directory: dynamic/
+
+api:
+  dashboard: true
+  debug: true
+
+log:
+  level: DEBUG
+
+certificatesResolvers:
+  default:
+    acme:
+      email: guido@guidojw.nl
+      storage: acme.json
+      httpChallenge:
+        entryPoint: http
+

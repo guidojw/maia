@@ -1,0 +1,7 @@
+http:
+  routers:
+    dashboard:
+      rule: "Host(`traefik.guidojw.nl`)"
+      service: api@internal
+      tls:
+        certResolver: default
