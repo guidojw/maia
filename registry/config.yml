@@ -1,0 +1,14 @@
+signup:
+  enabled: false
+
+anonymous_browsing:
+  enabled: false
+
+delete:
+  enabled: true
+  garbage_collector:
+    enabled: true
+
+background:
+  sync:
+    strategy: update
