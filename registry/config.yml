@@ -4,6 +4,16 @@ signup:
 anonymous_browsing:
   enabled: false
 
+oauth:
+  local_login:
+    enabled: false
+  gitlab:
+    enabled: true
+    application_id: <application_id>
+    secret: <secret>
+    group: "cs20-42"
+    server: "https://gitlab.utwente.nl"
+
 delete:
   enabled: true
   garbage_collector:
