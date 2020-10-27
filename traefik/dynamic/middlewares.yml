@@ -1,6 +1,0 @@
-http:
-  middlewares:
-    amber-api-strip:
-      stripPrefix:
-        prefixes:
-          - "/api"
