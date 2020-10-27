@@ -6,7 +6,7 @@ anonymous_browsing:
 
 oauth:
   local_login:
-    enabled: false
+    enabled: true
   gitlab:
     enabled: true
     application_id: <application_id>
