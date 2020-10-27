@@ -2,7 +2,7 @@ version: '3'
 
 services:
   traefik:
-    image: traefik:2.1
+    image: traefik:2.2
     container_name: traefik
     restart: unless-stopped
     networks:
@@ -12,6 +12,7 @@ services:
     ports:
       - 80:80
       - 443:443
+      - 8080:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/traefik.yml
