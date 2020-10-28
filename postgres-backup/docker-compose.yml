@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  amber:
+    build: .
+    env_file: .nsadmin.env
+    command: db_nsadmin_backup
+    volumes:
+      - ./secrets.yml:/app/secrets.yml:ro
+      - ./password:/app/password:ro
+      - /storage/backups:/storage/backups
+    networks:
+      - nsadmin-api_default
+
+networks:
+  nsadmin-api_default:
+    external: true
