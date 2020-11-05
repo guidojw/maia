@@ -1,1 +1,1 @@
-bundle exec backup perform --config-file ./backup --trigger $1
+bash models/"$1".sh "$1"
