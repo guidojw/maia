@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
-# Install wget & gnupg2
-RUN apt-get update && apt-get install -y wget gnupg2
+# Install wget & gnupg2 & curl
+RUN apt-get update && apt-get install -y wget gnupg2 curl
 
 # Add postgres libraries
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" > /etc/apt/sources.list.d/pgdg.list
