@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  nsadmin:
+    build: .
+    env_file: .nsadmin.env
+    command: db_nsadmin_backup
+    volumes:
+      - ./password:/opt/app/password
+      - /storage/backups:/storage/backups
+    networks:
+      - nsadmin_api_production_default
+
+networks:
+  nsadmin_api_production_default:
+    external: true
