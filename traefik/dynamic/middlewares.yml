@@ -1,0 +1,15 @@
+http:
+  middlewares:
+    STS:
+      headers:
+        sslRedirect: true
+        frameDeny: true
+        sslForceHost: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        browserXssFilter: true
+    nsadmin-api-strip:
+      stripPrefix:
+        prefixes:
+          - "/api"
