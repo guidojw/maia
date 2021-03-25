@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  sharex:
+    container_name: sharex
+    image: zmiguel/sharex-upload-server:latest
+    volumes:
+      - ./config.json:/usr/src/app/config.json
+      - ./db.json:/usr/src/app/db.json
+      - ./server/uploads/:/usr/src/app/server/uploads/
+    restart: unless-stopped
+    env_file: .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.sharex.rule=Host(`$HOST`)
+      - traefik.http.routers.sharex.tls.certresolver=default

@@ -9,6 +9,7 @@ services:
       - default
       - nsadmin_production_default
       - docker_registry_default
+      - sharex_default
     ports:
       - 80:80
       - 443:443
@@ -23,4 +24,6 @@ networks:
   nsadmin_production_default:
     external: true
   docker_registry_default:
+    external: true
+  sharex_default:
     external: true
