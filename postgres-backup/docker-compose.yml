@@ -10,7 +10,19 @@ services:
       - /storage/backups:/storage/backups
     networks:
       - nsadmin_api_production_default
+      -
+  arora_discord:
+    build: .
+    env_file: .arora_discord.env
+    command: db_arora_discord_backup
+    volumes:
+      - ./password:/opt/app/password
+      - /storage/backups:/storage/backups
+    networks:
+      - nsadmin_discord_production_default
 
 networks:
   nsadmin_api_production_default:
+    external: true
+  nsadmin_discord_production_default:
     external: true
