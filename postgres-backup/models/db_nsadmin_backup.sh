@@ -12,6 +12,6 @@ pg_dump -Ft --username="$POSTGRES_USER" -h db "$POSTGRES_DATABASE" | gzip | open
   -out "$BACKUP_LOCATION"/"$1"/"$DATE"/"$1".tar.enc
 
 find "$BACKUP_LOCATION" -type f -prune -mtime \
-  +$KEEP -exec rm -f {} \;
+  +$KEEP -exec rm -drf {} \;
 
 bash notifiers/discord.sh "$1"
