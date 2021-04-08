@@ -1,6 +1,6 @@
 http:
   middlewares:
-    STS:
+    sts:
       headers:
         sslRedirect: true
         frameDeny: true
@@ -9,7 +9,7 @@ http:
         stsIncludeSubdomains: true
         stsPreload: true
         browserXssFilter: true
-    nsadmin-api-strip:
+    api-strip:
       stripPrefix:
         prefixes:
           - "/api"
