@@ -1,16 +1,16 @@
 version: '3'
 
 services:
-  nsadmin:
+  arora_api:
     build: .
-    env_file: .nsadmin.env
-    command: db_nsadmin_backup
+    env_file: .arora_api.env
+    command: db_arora_api_backup
     volumes:
       - ./password:/opt/app/password
       - /storage/backups:/storage/backups
     networks:
-      - nsadmin_api_production_default
-      -
+      - arora_api_production_default
+
   arora_discord:
     build: .
     env_file: .arora_discord.env
@@ -19,10 +19,10 @@ services:
       - ./password:/opt/app/password
       - /storage/backups:/storage/backups
     networks:
-      - nsadmin_discord_production_default
+      - arora_discord_production_default
 
 networks:
-  nsadmin_api_production_default:
+  arora_api_production_default:
     external: true
-  nsadmin_discord_production_default:
+  arora_discord_production_default:
     external: true
