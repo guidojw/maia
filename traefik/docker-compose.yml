@@ -9,6 +9,7 @@ services:
       - default
       - arora_api_production_default
       - arora_api_staging_default
+      - trello_discord_webhook_production_default
       - docker_registry_default
       - sharex_default
     ports:
@@ -25,6 +26,8 @@ networks:
   arora_api_production_default:
     external: true
   arora_api_staging_default:
+    external: true
+  trello_discord_webhook_production_default:
     external: true
   docker_registry_default:
     external: true
