@@ -24,7 +24,7 @@ log:
 certificatesResolvers:
   default:
     acme:
-      email: guido@guidojw.nl
+      email:
       storage: acme.json
       httpChallenge:
         entryPoint: http
