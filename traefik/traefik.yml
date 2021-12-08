@@ -3,6 +3,9 @@ entryPoints:
     address: :80
   https:
     address: :443
+    forwardedHeaders:
+      trustedIPs:
+        - <ip>
 
 providers:
   providersThrottleDuration: 2s

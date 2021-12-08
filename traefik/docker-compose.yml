@@ -13,6 +13,8 @@ services:
       - arora_api_staging_default
       - trello_discord_webhook_production_default
       - sharex_default
+      - rudolfs_default
+      - rudolfs_auth_default
     ports:
       - '80:80'
       - '443:443'
@@ -33,4 +35,8 @@ networks:
   trello_discord_webhook_production_default:
     external: true
   sharex_default:
+    external: true
+  rudolfs_default:
+    external: true
+  rudolfs_auth_default:
     external: true
