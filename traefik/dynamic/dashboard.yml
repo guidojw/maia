@@ -1,7 +1,14 @@
 http:
+  middlewares:
+    dashboard-auth:
+      basicAuth:
+        usersFile: /dynamic/users
+
   routers:
     dashboard:
-      rule: "Host(`traefik.guidojw.nl`)"
+      rule: Host(`{{ env "DASBHOARD_URL" }}`)
       service: api@internal
       tls:
         certResolver: default
+      middlewares:
+        - dashboard-auth@file

@@ -5,7 +5,7 @@ http:
         - http
       middlewares:
         - https_redirect
-      rule: "HostRegexp(`{host:.+}`)"
+      rule: HostRegexp(`{host:.+}`)
       priority: 1
       service: noop@internal
 
