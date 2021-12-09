@@ -2,14 +2,21 @@ http:
   middlewares:
     sts:
       headers:
-        sslRedirect: true
         frameDeny: true
-        sslForceHost: true
         stsSeconds: 31536000
         stsIncludeSubdomains: true
         stsPreload: true
         browserXssFilter: true
+
     api-strip:
       stripPrefix:
         prefixes:
-          - "/api"
+          - /api
+
+    rewrite-body-authenticated:
+      plugin:
+        plugin-rewritebody:
+          lastModified: true
+          rewrites:
+            - regex: '"authenticated": true'
+              replacement: '"authenticated": false'

@@ -2,20 +2,23 @@ version: '3'
 
 services:
   traefik:
-    image: traefik:2.2
+    image: traefik:2.5.4
     container_name: traefik
     restart: unless-stopped
+    env_file: .env
     networks:
       - default
+      - harbor_harbor
       - arora_api_production_default
       - arora_api_staging_default
       - trello_discord_webhook_production_default
-      - docker_registry_default
       - sharex_default
+      - rudolfs_default
+      - rudolfs_auth_default
     ports:
-      - 80:80
-      - 443:443
-      - 8080:8080
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/traefik.yml
@@ -23,13 +26,17 @@ services:
       - ./dynamic:/dynamic/
 
 networks:
+  harbor_harbor:
+    external: true
   arora_api_production_default:
     external: true
   arora_api_staging_default:
     external: true
   trello_discord_webhook_production_default:
     external: true
-  docker_registry_default:
-    external: true
   sharex_default:
+    external: true
+  rudolfs_default:
+    external: true
+  rudolfs_auth_default:
     external: true
