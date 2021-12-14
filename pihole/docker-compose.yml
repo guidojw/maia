@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  pihole:
+    image: pihole/pihole:2021.11@sha256:5ce7ddbfc8975a48f3972e187dc49e7f51a42be6497c5fc4af7dec9171bfb15e
+    env_file: .env
+    environment:
+      TZ: Europe/Amsterdam
+      WEBPASSWORD: <password>
+    volumes:
+      - ./pihole/:/etc/pihole/
+      - ./dnsmasq.d/:/etc/dnsmasq.d/
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pihole.rule=Host(`$HOST`)
+      - traefik.http.routers.pihole.entrypoints=http,https
+      - traefik.http.routers.pihole.tls.certresolver=default
+      - traefik.http.services.pihole.loadbalancer.server.port=80
+
+      - traefik.tcp.routers.dnsovertls.rule=HostSNI(`$HOST`)
+      - traefik.tcp.routers.dnsovertls.tls.certresolver=default
+      - traefik.tcp.routers.dnsovertls.entrypoints=dnsovertls
+      - traefik.tcp.services.pihole.loadbalancer.server.port=53
+      - traefik.tcp.routers.dns.rule=HostSNI(`$HOST`)
+      - traefik.tcp.routers.dns.entrypoints=dns
+
+      - traefik.udp.routers.udpdns.entrypoints=udpdns
+      - traefik.udp.services.pihole.loadbalancer.server.port=53

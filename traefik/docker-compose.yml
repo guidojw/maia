@@ -15,10 +15,14 @@ services:
       - sharex_default
       - rudolfs_default
       - rudolfs_auth_default
+      - pihole_default
     ports:
       - '80:80'
       - '443:443'
       - '8080:8080'
+      - '853:853'
+      - '53:53/udp'
+      - '53:53'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/traefik.yml
@@ -39,4 +43,6 @@ networks:
   rudolfs_default:
     external: true
   rudolfs_auth_default:
+    external: true
+  pihole_default:
     external: true
