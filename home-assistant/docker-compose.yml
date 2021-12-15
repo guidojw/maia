@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  homeassistant:
+    image: homeassistant/home-assistant@sha256:44b1d159134478fc8bc625e416c5b0c3224b33049c71721107eae30e73c6edfb
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.home-assistant.rule=Host(`$HOST`)
+      - traeifk.http.routers.home-assistant.entrypoints=http,https
+      - traefik.http.routers.home-assistant.tls.certresolver=default
+      - traefik.http.services.home-assistant.loadbalancer.server.port=8123
+      - traefik.docker.network=home_assistant_default
+    networks:
+      default:
+      a_macnet178: # Prioritise over default network.
+        ipv4_address: 192.168.178.100
+
+networks:
+  a_macnet178:
+    driver: macvlan
+    driver_opts:
+      parent: <interface>
+    ipam:
+      config:
+        - subnet: 192.168.178.0/24
+          gateway: 192.168.178.1
+          ip_range: 192.168.178.100/27
