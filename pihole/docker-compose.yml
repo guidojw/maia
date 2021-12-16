@@ -21,12 +21,12 @@ services:
       - traefik.http.routers.pihole.tls.certresolver=default
       - traefik.http.services.pihole.loadbalancer.server.port=80
 
-      - traefik.tcp.routers.dnsovertls.rule=HostSNI(`$HOST`)
-      - traefik.tcp.routers.dnsovertls.tls.certresolver=default
-      - traefik.tcp.routers.dnsovertls.entrypoints=dnsovertls
-      - traefik.tcp.services.pihole.loadbalancer.server.port=53
-      - traefik.tcp.routers.dns.rule=HostSNI(`$HOST`)
-      - traefik.tcp.routers.dns.entrypoints=dns
+#      - traefik.tcp.routers.dnsovertls.rule=HostSNI(`$HOST`)
+#      - traefik.tcp.routers.dnsovertls.tls.certresolver=default
+#      - traefik.tcp.routers.dnsovertls.entrypoints=dnsovertls
+#      - traefik.tcp.services.pihole.loadbalancer.server.port=53
+#      - traefik.tcp.routers.dns.rule=HostSNI(`$HOST`)
+#      - traefik.tcp.routers.dns.entrypoints=dns
 
-      - traefik.udp.routers.udpdns.entrypoints=udpdns
-      - traefik.udp.services.pihole.loadbalancer.server.port=53
+#      - traefik.udp.routers.udpdns.entrypoints=udpdns
+#      - traefik.udp.services.pihole.loadbalancer.server.port=53
