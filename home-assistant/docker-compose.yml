@@ -2,7 +2,7 @@ version: '3'
 
 services:
   homeassistant:
-    image: homeassistant/home-assistant@sha256:44b1d159134478fc8bc625e416c5b0c3224b33049c71721107eae30e73c6edfb
+    image: homeassistant/home-assistant:2021.12@sha256:44b1d159134478fc8bc625e416c5b0c3224b33049c71721107eae30e73c6edfb
     volumes:
       - ./config:/config
       - /etc/localtime:/etc/localtime:ro
