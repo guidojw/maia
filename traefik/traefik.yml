@@ -6,6 +6,12 @@ entryPoints:
     forwardedHeaders:
       trustedIPs:
         - <ip>
+#  dnsovertls:
+#    address: :853
+#  dns:
+#    address: :53
+#  udpdns:
+#    address: :53/udp
 
 providers:
   providersThrottleDuration: 2s
