@@ -12,4 +12,4 @@ pg_dump -Ft --username="$POSTGRES_USER" -h db "$POSTGRES_DATABASE" | gzip | \
 
 find "$BACKUP_LOCATION" -mindepth 1 -maxdepth 1 -mtime +$KEEP -exec rm -rf {} +
 
-bash notifiers/discord.sh "$1"
+#bash notifiers/discord.sh "$1"
