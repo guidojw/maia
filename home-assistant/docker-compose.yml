@@ -21,6 +21,7 @@ services:
 
 networks:
   a_macnet178:
+    enable_ipv6: true
     driver: macvlan
     driver_opts:
       parent: <interface>
@@ -29,3 +30,5 @@ networks:
         - subnet: 192.168.178.0/24
           gateway: 192.168.178.1
           ip_range: 192.168.178.100/27
+        - subnet: <ipv6/prefixlength>
+          gateway: <ipv6>
