@@ -4,14 +4,12 @@ services:
   db:
     image: postgres:11.2@sha256:3eda284d1840c21b3b54a10aab80233cf82b93236e70603bdd097088932f6ba0
     restart: unless-stopped
-    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   app:
     image: nextcloud:23.0.0@sha256:39ed3b1633723b4923e006e7a89144c093f1dc07413047cc1bbe9ffacafeb30b
     restart: unless-stopped
-    env_file: .env
     hostname: maya
     volumes:
       - nextcloud_data:/var/www/html
@@ -44,13 +42,13 @@ services:
       - ./onlyoffice/db:/var/lib/postgresql
     labels:
       - traefik.enable=true
-      - traefik.http.routers.onlyoffice.rule=Host(`$HOST`) && PathPrefix(`/onlyoffice`)
-      - traefik.http.routers.onlyoffice.tls.certresolver=default
+      - traefik.http.routers.only-office.rule=Host(`$ONLY_OFFICE_HOST`)
+      - traefik.http.routers.only-office.tls.certresolver=default
 
       # Headers for OnlyOffice, https://github.com/ONLYOFFICE/onlyoffice-nextcloud/issues/151
-      - traefik.http.routers.onlyoffice.middlewares=onlyoffice-headers
-      - traefik.http.middlewares.onlyoffice-headers.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.middlewares.onlyoffice-headers.headers.accessControlAllowOrigin=*
+      - traefik.http.routers.only-office.middlewares=only-office-headers
+      - traefik.http.middlewares.only-office-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.only-office-headers.headers.accessControlAllowOriginList=*
 
 volumes:
   nextcloud_data:
