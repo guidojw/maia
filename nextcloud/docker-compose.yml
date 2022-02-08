@@ -13,7 +13,8 @@ services:
     hostname: maya
     volumes:
       - nextcloud_data:/var/www/html
-      - /storage/nextcloud:/var/www/html/data
+      - ./php.ini:/usr/local/etc/php/conf.d/zzz-custom.ini
+      - /mnt/hdd1/nextcloud:/var/www/html/data
     labels:
       - traefik.enable=true
       - traefik.http.routers.nextcloud.rule=Host(`$HOST`)
