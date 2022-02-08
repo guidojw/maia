@@ -5,7 +5,6 @@ services:
     image: goharbor/harbor-log:v2.2.1
     container_name: harbor-log
     restart: always
-    dns_search: .
     cap_drop:
       - ALL
     cap_add:
@@ -47,7 +46,6 @@ services:
         target: /harbor_cust_cert
     networks:
       - harbor
-    dns_search: .
     depends_on:
       - log
     logging:
@@ -79,7 +77,6 @@ services:
         target: /harbor_cust_cert
     networks:
       - harbor
-    dns_search: .
     depends_on:
       - log
     logging:
@@ -103,7 +100,6 @@ services:
       - /var/lib/docker/volumes/harbor_data/_data/database:/var/lib/postgresql/data:z
     networks:
       harbor:
-    dns_search: .
     env_file:
       - ./common/config/db/env
     depends_on:
@@ -143,7 +139,6 @@ services:
         target: /harbor_cust_cert
     networks:
       harbor:
-    dns_search: .
     depends_on:
       - log
       - registry
@@ -172,7 +167,6 @@ services:
         target: /etc/nginx/nginx.conf
     networks:
       - harbor
-    dns_search: .
     depends_on:
       - log
     logging:
@@ -203,7 +197,6 @@ services:
         target: /harbor_cust_cert
     networks:
       - harbor
-    dns_search: .
     depends_on:
       - core
     logging:
@@ -226,7 +219,6 @@ services:
       - /var/lib/docker/volumes/harbor_data/_data/redis:/var/lib/redis
     networks:
       harbor:
-    dns_search: .
     depends_on:
       - log
     logging:
@@ -257,7 +249,6 @@ services:
         target: /harbor_cust_cert
     networks:
       - harbor
-    dns_search: .
 #     ports:
 #       - 80:8080
     depends_on:
