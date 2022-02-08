@@ -1,7 +1,7 @@
 Nextcloud
 ================
 
-Configuration files for Pi-hole.
+Configuration files for Nextcloud.
 
 ## Extra setup
 
