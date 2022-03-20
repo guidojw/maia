@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  cloudflare_ddns_ipv4: &default
+    image: oznu/cloudflare-ddns:amd64@sha256:f552b1053ca4bad934eb3ca16e2d22decefe4423e2bf3e0a354fa1ab03b46390
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PROXIED: 'true'
+    network_mode: host
+
+  cloudflare_ddns_ipv6:
+    <<: *default
+    environment:
+      RRTYPE: AAAA
+      PROXIED: 'true'
