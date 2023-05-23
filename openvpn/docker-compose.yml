@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  openvpn:
+    image: kylemanna/openvpn:2.4@sha256:4de5e6690818c7c4025ae605369f681e813a7f9fe5d99feed988412c2d07987c
+    restart: unless-stopped
+    volumes:
+      - ./openvpn-data:/etc/openvpn
+    labels:
+      - traefik.enable=true
+      - traefik.tcp.routers.openvpn.rule=HostSNI(`*`)
+      - traeifk.tcp.routers.openvpn.entrypoints=https
+    cap_add:
+      - NET_ADMIN
