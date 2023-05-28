@@ -1,0 +1,16 @@
+tunnel: <id>
+credentials-file: <path>
+
+ingress:
+    # SSH service
+  - hostname: <host>
+    service: ssh://host.docker.internal:22
+
+    # All other services
+  - hostname: <host>
+    service: https://traefik:443
+    originRequest:
+      originServerName: <host>
+
+    # Fallback service
+  - service: http_status:404
