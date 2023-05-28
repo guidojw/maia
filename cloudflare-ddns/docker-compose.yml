@@ -1,16 +1,15 @@
 version: '3'
 
 services:
-  cloudflare_ddns_ipv4: &default
-    image: oznu/cloudflare-ddns:amd64@sha256:f552b1053ca4bad934eb3ca16e2d22decefe4423e2bf3e0a354fa1ab03b46390
+  cloudflare-ddns:
+    image: timothyjmiller/cloudflare-ddns:latest@sha256:90546cbd843c61cf34e43df3f2eecc24a76950641c734c30373a2d4190ad4abb
+    container_name: cloudflare-ddns
     restart: unless-stopped
-    env_file: .env
-    environment:
-      PROXIED: 'true'
+    security_opt:
+      - no-new-privileges:true
     network_mode: host
-
-  cloudflare_ddns_ipv6:
-    <<: *default
     environment:
-      RRTYPE: AAAA
-      PROXIED: 'true'
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./config.json:/config.json
