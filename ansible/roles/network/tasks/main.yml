@@ -1,0 +1,5 @@
+---
+- name: Get current user
+  command:
+    cmd: |
+      echo $(whois)
