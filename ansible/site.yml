@@ -1,3 +1,5 @@
 ---
-- roles:
+- hosts: zeus
+  become: true
+  roles:
     - role: network

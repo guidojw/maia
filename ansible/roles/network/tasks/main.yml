@@ -1,5 +1,28 @@
 ---
-- name: Get current user
-  command:
-    cmd: |
-      echo $(whois)
+- name: Install needed Network Manager libraries
+  package:
+    name:
+      - NetworkManager-libnm
+      - nm-connection-editor
+      - libsemanage-python
+      - policycoreutils-python
+    state: present
+
+- name: Configure policy IP routing for local subnet
+  nmcli:
+    conn_name: "{{ conn_name }}"
+    routes4_extended:
+        # Using 0.0.0.0/1 and 128.0.0.1 because nmcli doesn't allow 0.0.0.0/0 to
+        # be used.
+      - ip: 0.0.0.0/1
+        next_hop: "{{ ipv4_gateway }}"
+        table: "{{ ipv4_route_table }}"
+      - ip: 128.0.0.0/1
+        next_hop: "{{ ipv4_gateway }}"
+        table: "{{ ipv4_route_table }}"
+      - ip: "{{ ipv4_subnet }}" 
+        table: "{{ ipv4_route_table }}"
+    routing_rules4:
+      - "priority 32765 from {{ ipv4_address }} table {{ ipv4_route_table }}"
+    state: present
+  notify: "reactivate connection"
