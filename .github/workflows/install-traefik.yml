@@ -7,6 +7,9 @@ jobs:
     name: Helm install Traefik
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
       - name: Helm install Traefik
         uses: vimeda/helm@8fb24318e538359380b6acaaee9aa686d5f0c5cb # v1.7.0
         with:
@@ -14,10 +17,7 @@ jobs:
           namespace: default
           chart: traefik/traefik
           token: ${{ github.token }}
-          value-files: >-
-            [
-              "traefik/values.yaml"
-            ]
+          value-files: traefik/values.yaml
           repo: https://traefik.github.io/charts
           repo-alias: traefik
         env:
