@@ -1,0 +1,20 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  helm_install:
+    name: Helm install Traefik
+    runs-on: ubuntu-latest
+    steps:
+      - name: Helm install Traefik
+        uses: vimeda/helm@8fb24318e538359380b6acaaee9aa686d5f0c5cb # v1.7.0
+        with:
+          namespace: default
+          chart: traefik/traefik
+          token: ${{ github.token }}
+          value-files: traefik/values.yaml
+          repo:  https://traefik.github.io/charts
+          repo-alias: traefik
+        env:
+          KUBECONFIG_FILE: ${{ secrets.KUBE_CONFIG }}
+          
