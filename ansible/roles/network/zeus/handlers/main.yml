@@ -1,4 +1,3 @@
 ---
 - name: Reactivate connection
   command: nmcli c up "{{ conn_name }}" 
-  listen: "reactivate connection"

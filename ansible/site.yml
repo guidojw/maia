@@ -1,5 +1,10 @@
 ---
-- hosts: zeus
+# - hosts: zeus
+#   become: true
+#   roles:
+#     - role: network/zeus
+
+- hosts: maya
   become: true
   roles:
-    - role: network
+    - role: network/maya
