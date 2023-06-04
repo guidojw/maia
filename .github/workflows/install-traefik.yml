@@ -14,7 +14,7 @@ jobs:
         uses: vimeda/helm@8fb24318e538359380b6acaaee9aa686d5f0c5cb # v1.7.0
         with:
           release: traefik
-          namespace: default
+          namespace: traefik
           chart: traefik/traefik
           token: ${{ github.token }}
           value-files: traefik/values.yaml
