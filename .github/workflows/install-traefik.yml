@@ -14,7 +14,8 @@ jobs:
           namespace: default
           chart: traefik/traefik
           token: ${{ github.token }}
-          value-files: traefik/values.yaml
+          value-files: 
+            - ../../traefik/values.yaml
           repo:  https://traefik.github.io/charts
           repo-alias: traefik
         env:
