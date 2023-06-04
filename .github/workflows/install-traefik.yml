@@ -1,5 +1,4 @@
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -10,6 +9,7 @@ jobs:
       - name: Helm install Traefik
         uses: vimeda/helm@8fb24318e538359380b6acaaee9aa686d5f0c5cb # v1.7.0
         with:
+          release: traefik
           namespace: default
           chart: traefik/traefik
           token: ${{ github.token }}
