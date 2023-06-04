@@ -7,7 +7,7 @@ jobs:
     name: Helm install Traefik
     runs-on: ubuntu-latest
     steps:
-      - script: |
+      - run: |
           echo $(pwd)
 
       - name: Helm install Traefik
