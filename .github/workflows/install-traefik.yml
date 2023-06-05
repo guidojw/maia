@@ -10,16 +10,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
 
-      - name: Helm install Traefik
-        uses: vimeda/helm@8fb24318e538359380b6acaaee9aa686d5f0c5cb # v1.7.0
+      - name: Set up Helm
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
         with:
-          release: traefik
-          namespace: traefik
-          chart: traefik/traefik
-          token: ${{ github.token }}
-          value-files: traefik/values.yaml
-          repo: https://traefik.github.io/charts
-          repo-alias: traefik
-        env:
-          KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
+          version: v3.11.1
+
+      - name: Helm install Traefik
+        script: |
+          helm repo add traefik https://traefik.github.io/charts
+          helm install traefik traefik/traefik --version v23.0.1 -f traefik/values.yaml -n traefik
           
