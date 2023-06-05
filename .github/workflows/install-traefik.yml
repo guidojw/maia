@@ -25,5 +25,5 @@ jobs:
       - name: Helm install Traefik
         run: |
           helm repo add traefik https://traefik.github.io/charts
-          helm install traefik traefik/traefik --version v23.0.1 -f traefik/values.yaml -n traefik
+          helm install traefik traefik/traefik --replace --version v23.0.1 -f traefik/values.yaml -n traefik
           
