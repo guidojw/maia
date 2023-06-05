@@ -15,9 +15,13 @@ jobs:
         with:
           version: v3.11.1
 
-      - name: Helm install Traefik
+      - name: Create kubeconfig file
         env:
           KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          echo "$KUBECONFIG" > ~/.kube/config
+
+      - name: Helm install Traefik
         run: |
           helm repo add traefik https://traefik.github.io/charts
           helm install traefik traefik/traefik --version v23.0.1 -f traefik/values.yaml -n traefik
