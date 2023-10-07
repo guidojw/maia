@@ -817,7 +817,7 @@ hostNetwork: false
 
 # -- Whether Role Based Access Control objects like roles and rolebindings should be created
 rbac:
-  enabled: false
+  enabled: true
   # If set to false, installs ClusterRole and ClusterRoleBinding so Traefik can be used across namespaces.
   # If set to true, installs Role and RoleBinding. Providers will only watch target namespace.
   namespaced: false
