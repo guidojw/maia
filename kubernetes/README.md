@@ -26,7 +26,8 @@ Now you can get a kubeconfig for continuous deployment (i.e. GitHub Actions) by 
 ./kubernetes/get-service-account-config.sh
 ```
 
-This wil output the kubeconfig to file `github-actions` in the project root. If necessary, change the IP address in the cluster server config to an external IP and then save it in a GitHub Actions secret.
+This wil output the kubeconfig to file `github-actions` in the project root.
+If necessary, change the IP address in the cluster server config to an external domain/IP and then save it in a GitHub Actions secret.
 
 ## Removing cluster
 Run the playbook with:
