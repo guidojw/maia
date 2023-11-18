@@ -3,6 +3,11 @@
 
 **/charts/*.tgz
 
+.terraform
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
 .idea
 
 password
