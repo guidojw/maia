@@ -1,9 +1,10 @@
 ---
+# https://unix.stackexchange.com/questions/237460/ssh-into-a-server-which-is-connected-to-a-vpn-service
 - name: Configure policy IP routing for local subnet
   nmcli:
     conn_name: "{{ conn_name }}"
     routes4_extended:
-        # Using 0.0.0.0/1 and 128.0.0.0/1 because nmcli doesn't allow 0.0.0.0/0 
+        # Using 0.0.0.0/1 and 128.0.0.0/1 because nmcli doesn't allow 0.0.0.0/0
         # to be used.
       - ip: 0.0.0.0/1
         next_hop: "{{ ipv4_gateway }}"
@@ -11,7 +12,7 @@
       - ip: 128.0.0.0/1
         next_hop: "{{ ipv4_gateway }}"
         table: "{{ ipv4_route_table }}"
-      - ip: "{{ ipv4_subnet }}" 
+      - ip: "{{ ipv4_subnet }}"
         table: "{{ ipv4_route_table }}"
     routing_rules4:
       - "priority 32765 from {{ ipv4_address }} table {{ ipv4_route_table }}"
