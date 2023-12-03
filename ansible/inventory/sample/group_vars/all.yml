@@ -1,9 +1,11 @@
 ---
 ansible_user: ansibleuser
 
-conn_name: eth0
+zeus_conn_name: eth0
 
 ipv4_route_table: 128
 ipv4_address: "{{ ansible_eth0.ipv4.address }}"
 ipv4_gateway: "{{ ipv4_subnet | ansible.utils.nthhost(1) }}"
 ipv4_subnet: "{{ (ansible_eth0.ipv4.network ~ '/' ~ ansible_eth0.ipv4.netmask) | ansible.utils.ipaddr('net') }}"
+
+vlan_conn_name: VLAN10

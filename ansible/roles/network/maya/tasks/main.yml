@@ -1,16 +1,9 @@
 ---
-- name: Install Network Manager
-  package:
-    name:
-      - network-manager
+- name: Create VLAN connection
+  nmcli:
+    conn_name: "{{ vlan_conn_name }}"
+    type: vlan
+    vlandev: enp4s0
+    vlanid: 10
     state: present
-
-# - name: Add VLAN interface
-#   nmcli:
-#     conn_name: "{{ conn_name }}"
-#     state: present
-
-
-vi /etc/netplan/00-installer-config.yaml renderer: NetworkManager
-nmcli con add type vlan con-name VLAN10 dev enp4s0 id 10
-nmcli c up VLAN10
+  notify: up connection

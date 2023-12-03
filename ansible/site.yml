@@ -1,10 +1,23 @@
 ---
-# - hosts: zeus
-#   become: true
-#   roles:
-#     - role: network/zeus
+- hosts: zeus
+  become: true
+  roles:
+    - role: network/zeus
 
 - hosts: maya
   become: true
   roles:
+    - role: mrlesmithjr.netplan
+      netplan_enabled: true
+      netplan_config_file: /etc/netplan/00-installer-config.yaml
+      netplan_renderer: NetworkManager
+      netplan_configuration:
+        network:
+          version: 2
+          ethernets:
+            enp4s0:
+              dhcp4: true
+              dhcp6: true
+              accept-ra: true
+
     - role: network/maya
