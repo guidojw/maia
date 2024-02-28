@@ -1,6 +1,8 @@
 *.env
 *.key
 
+ansible.cfg
+
 .idea
 
 password

@@ -1,0 +1,47 @@
+---
+- name: Install dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - systemd-container
+    - debootstrap
+
+- name: Create directory /data/custom/machines
+  file:
+    path: /data/custom/machines
+    state: directory
+  register: data_directory
+
+- name: Install Debian base system in {{ data_directory.path }}
+  command:
+    chdir: "{{ data_directory.path }}"
+    cmd: >-
+      debootstrap --include=systemd,dbus stable debian-custom
+    creates: debian-custom
+
+- name: List machinectl containers
+  command: >-
+    machinectl list
+  register: machines
+
+- name: Check if container is already running
+  set_fact:
+    running: "{% if (machines.stdout | regex_search(regex)) %}True{% else %}False{% endif %}"
+  vars:
+    regex: '\ndebian-custom\s+container\s+systemd-nspawn\s+debian\s+'
+
+- name: Set up container
+  when: not running
+  command: >-
+    systemd-nspawn
+      -M debian-custom
+      -D {{ data_directory.path }}/debian-custom
+      /bin/bash -c '
+      set -e;
+      echo "root:{{ nspawn_container_root_password }}" | chpasswd;
+      systemctl enable systemd-networkd;
+      echo "nameserver 1.1.1.1" > /etc/resolv.conf;
+      echo "debian-custom" > /etc/hostname
+      '
+  no_log: true # Because plaintext password would be logged for which I could not find another solution.

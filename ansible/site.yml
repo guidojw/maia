@@ -1,10 +1,12 @@
 ---
-- hosts: zeus
-  become: true
+- hosts: hera
+  gather_facts: false
+  vars:
+    ansible_user: root
   roles:
-    - role: network/zeus
+    - role: network/hera
 
-- hosts: maya
+- hosts: maia
   become: true
   roles:
     - role: mrlesmithjr.netplan
@@ -20,4 +22,9 @@
               dhcp6: true
               accept-ra: true
 
-    - role: network/maya
+    - role: network/maia
+
+- hosts: zeus
+  become: true
+  roles:
+    - role: network/zeus
