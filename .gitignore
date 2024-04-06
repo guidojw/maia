@@ -3,6 +3,8 @@
 
 ansible.cfg
 
+**/charts/*.tgz
+
 .idea
 
 password
