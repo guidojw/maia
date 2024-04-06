@@ -1,6 +1,8 @@
 *.env
 *.key
 
+ansible.cfg
+
 **/charts/*.tgz
 
 .idea

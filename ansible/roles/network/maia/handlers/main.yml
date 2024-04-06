@@ -1,0 +1,7 @@
+---
+# No need to use ignore_unreachable or wait_for_connection as this regards a
+# new connection instead of the one that Ansible is connected over.
+- name: Up connection
+  listen: up connection
+  command: >-
+    nmcli c up "{{ vlan_conn_name }}"
