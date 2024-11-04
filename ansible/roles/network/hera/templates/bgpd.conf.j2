@@ -5,14 +5,14 @@ password {{ bgp_password }}
 frr defaults traditional
 log file stdout
 !
-router bgp 65510
+router bgp 64512
 bgp ebgp-requires-policy
 bgp router-id {{ router_ip }}
 maximum-paths 1
 !
 ! Peer group for MetalLB
 neighbor ML peer-group
-neighbor ML remote-as 65512
+neighbor ML remote-as 64513
 neighbor ML activate
 neighbor ML soft-reconfiguration inbound
 neighbor ML timers 15 45
