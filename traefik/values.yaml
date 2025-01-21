@@ -149,7 +149,10 @@ traefik:
       config.yml: |
         tcp:
           routers:
-            default:
+            legacy-router:
+              entryPoints:
+                - web
+                - websecure
               rule: {{ include "traefik.tcpRouterRule" .Values.dynamicConfigUrls | quote }}
               service: traefik
               tls:
