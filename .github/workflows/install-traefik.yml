@@ -1,5 +1,9 @@
 on:
   push:
+    branches:
+      - main
+    paths:
+      - traefik/**
   workflow_dispatch:
 
 jobs:
@@ -25,4 +29,13 @@ jobs:
 
       - name: Helm install Traefik
         run: |
-          helm upgrade traefik traefik --atomic --dependency-update -f traefik/values.yaml -n traefik
+          helm upgrade traefik traefik \
+            --atomic \
+            --dependency-update \
+            -n traefik \
+            -f traefik/values.yaml \
+            --set "traefik.certificatesResolvers.letsencrypt.acme.email=$ACME_EMAIL" \
+            --set "traefik.dynamicConfigUrls={$DYNAMIC_CONFIG_URLS}"
+        env:
+          ACME_EMAIL: ${{ secrets.TRAEFIK_ACME_EMAIL }}
+          DYNAMIC_CONFIG_URLS: ${{ secrets.TRAEFIK_DYNAMIC_CONFIG_URLS }}
