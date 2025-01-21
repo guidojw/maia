@@ -192,6 +192,7 @@ traefik:
             keyFile: /certs/unifi-legacy/tls.key
           - certFile: /certs/vpn-legacy/tls.crt
             keyFile: /certs/vpn-legacy/tls.key
+
           options:
             default:
               minVersion: VersionTLS12
