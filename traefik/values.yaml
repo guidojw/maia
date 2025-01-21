@@ -3,19 +3,28 @@ traefik:
   deployment:
     # -- Additional initContainers (e.g. for setting file permission as shown below)
     initContainers:
-      # The "volume-permissions" init container is required if you run into permission issues.
-      # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
-      - name: volume-permissions
-        image: busybox:latest
-        command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
-        volumeMounts:
-        - mountPath: /data
-          name: data
+    # The "volume-permissions" init container is required if you run into permission issues.
+    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
+    - name: volume-permissions
+      image: busybox:latest
+      command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
+      volumeMounts:
+      - mountPath: /data
+        name: data
+
+  # -- Create a default IngressClass for Traefik
+  ingressClass:  # @schema additionalProperties: false
+    isDefaultClass: false
 
   ingressRoute:
     dashboard:
       # -- Create an IngressRoute for the dashboard
       enabled: true
+
+  providers:  # @schema additionalProperties: false
+    kubernetesIngress:
+      # -- When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed.
+      ingressClass: traefik # @schema type:[string, null]
 
   logs:
     general:
@@ -34,48 +43,48 @@ traefik:
   # - "--ping"
   # - "--ping.entrypoint=web"`
   volumes:
-    - name: dynamic-config
-      mountPath: /config
-      type: configMap
-    - name: cloud-legacy-cert
-      mountPath: /certs/cloud-legacy
-      type: secret
-    - name: docker-legacy-cert
-      mountPath: /certs/docker-legacy
-      type: secret
-    - name: homeassistant-legacy-cert
-      mountPath: /certs/homeassistant-legacy
-      type: secret
-    - name: nsadmin-legacy-cert
-      mountPath: /certs/nsadmin-legacy
-      type: secret
-    - name: onlyoffice-legacy-cert
-      mountPath: /certs/onlyoffice-legacy
-      type: secret
-    - name: pihole-legacy-cert
-      mountPath: /certs/pihole-legacy
-      type: secret
-    - name: rudolfs-legacy-cert
-      mountPath: /certs/rudolfs-legacy
-      type: secret
-    - name: sharex-legacy-cert
-      mountPath: /certs/sharex-legacy
-      type: secret
-    - name: staging-nsadmin-legacy-cert
-      mountPath: /certs/staging-nsadmin-legacy
-      type: secret
-    - name: traefik-legacy-cert
-      mountPath: /certs/traefik-legacy
-      type: secret
-    - name: trello-legacy-cert
-      mountPath: /certs/trello-legacy
-      type: secret
-    - name: unifi-legacy-cert
-      mountPath: /certs/unifi-legacy
-      type: secret
-    - name: vpn-legacy-cert
-      mountPath: /certs/vpn-legacy
-      type: secret
+  - name: dynamic-config
+    mountPath: /config
+    type: configMap
+  - name: cloud-legacy-cert
+    mountPath: /certs/cloud-legacy
+    type: secret
+  - name: docker-legacy-cert
+    mountPath: /certs/docker-legacy
+    type: secret
+  - name: homeassistant-legacy-cert
+    mountPath: /certs/homeassistant-legacy
+    type: secret
+  - name: nsadmin-legacy-cert
+    mountPath: /certs/nsadmin-legacy
+    type: secret
+  - name: onlyoffice-legacy-cert
+    mountPath: /certs/onlyoffice-legacy
+    type: secret
+  - name: pihole-legacy-cert
+    mountPath: /certs/pihole-legacy
+    type: secret
+  - name: rudolfs-legacy-cert
+    mountPath: /certs/rudolfs-legacy
+    type: secret
+  - name: sharex-legacy-cert
+    mountPath: /certs/sharex-legacy
+    type: secret
+  - name: staging-nsadmin-legacy-cert
+    mountPath: /certs/staging-nsadmin-legacy
+    type: secret
+  - name: traefik-legacy-cert
+    mountPath: /certs/traefik-legacy
+    type: secret
+  - name: trello-legacy-cert
+    mountPath: /certs/trello-legacy
+    type: secret
+  - name: unifi-legacy-cert
+    mountPath: /certs/unifi-legacy
+    type: secret
+  - name: vpn-legacy-cert
+    mountPath: /certs/vpn-legacy
+    type: secret
 
   # -- Global command arguments to be passed to all traefik's pods
   globalArguments: []
@@ -84,7 +93,7 @@ traefik:
   # See [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)
   # Use curly braces to pass values: `helm install --set="additionalArguments={--providers.kubernetesingress.ingressclass=traefik-internal,--log.level=DEBUG}"`
   additionalArguments:
-    - "--providers.file.filename=/config/config.yml"
+  - "--providers.file.filename=/config/config.yml"
 
   ports:
     traefik:
@@ -132,55 +141,55 @@ traefik:
   # In some cases, it can avoid the need for additional, extended or adhoc deployments.
   # See #595 for more details and traefik/tests/values/extra.yaml for example.
   extraObjects:
-    - apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: dynamic-config
-      data:
-        config.yml: |
-          tcp:
-            routers:
-              default:
-                rule: {{ include "traefik.tcpRouterRule" .Values.dynamicConfigUrls | quote }}
-                service: traefik
-                tls:
-                  passthrough: true
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: dynamic-config
+    data:
+      config.yml: |
+        tcp:
+          routers:
+            default:
+              rule: {{ include "traefik.tcpRouterRule" .Values.dynamicConfigUrls | quote }}
+              service: traefik
+              tls:
+                passthrough: true
 
-            services:
-              traefik:
-                loadbalancer:
-                  servers:
-                    - address: "192.168.1.55:443"
+          services:
+            traefik:
+              loadbalancer:
+                servers:
+                - address: "192.168.1.55:443"
 
-          tls:
-            certificates:
-              - certFile: /certs/cloud-legacy/tls.crt
-                keyFile: /certs/cloud-legacy/tls.key
-              - certFile: /certs/docker-legacy/tls.crt
-                keyFile: /certs/docker-legacy/tls.key
-              - certFile: /certs/homeassistant-legacy/tls.crt
-                keyFile: /certs/homeassistant-legacy/tls.key
-              - certFile: /certs/nsadmin-legacy/tls.crt
-                keyFile: /certs/nsadmin-legacy/tls.key
-              - certFile: /certs/onlyoffice-legacy/tls.crt
-                keyFile: /certs/onlyoffice-legacy/tls.key
-              - certFile: /certs/pihole-legacy/tls.crt
-                keyFile: /certs/pihole-legacy/tls.key
-              - certFile: /certs/rudolfs-legacy/tls.crt
-                keyFile: /certs/rudolfs-legacy/tls.key
-              - certFile: /certs/sharex-legacy/tls.crt
-                keyFile: /certs/sharex-legacy/tls.key
-              - certFile: /certs/staging-nsadmin-legacy/tls.crt
-                keyFile: /certs/staging-nsadmin-legacy/tls.key
-              - certFile: /certs/traefik-legacy/tls.crt
-                keyFile: /certs/traefik-legacy/tls.key
-              - certFile: /certs/trello-legacy/tls.crt
-                keyFile: /certs/trello-legacy/tls.key
-              - certFile: /certs/unifi-legacy/tls.crt
-                keyFile: /certs/unifi-legacy/tls.key
-              - certFile: /certs/vpn-legacy/tls.crt
-                keyFile: /certs/vpn-legacy/tls.key
-            options:
-              default:
-                minVersion: VersionTLS12
-                sniStrict: true
+        tls:
+          certificates:
+          - certFile: /certs/cloud-legacy/tls.crt
+            keyFile: /certs/cloud-legacy/tls.key
+          - certFile: /certs/docker-legacy/tls.crt
+            keyFile: /certs/docker-legacy/tls.key
+          - certFile: /certs/homeassistant-legacy/tls.crt
+            keyFile: /certs/homeassistant-legacy/tls.key
+          - certFile: /certs/nsadmin-legacy/tls.crt
+            keyFile: /certs/nsadmin-legacy/tls.key
+          - certFile: /certs/onlyoffice-legacy/tls.crt
+            keyFile: /certs/onlyoffice-legacy/tls.key
+          - certFile: /certs/pihole-legacy/tls.crt
+            keyFile: /certs/pihole-legacy/tls.key
+          - certFile: /certs/rudolfs-legacy/tls.crt
+            keyFile: /certs/rudolfs-legacy/tls.key
+          - certFile: /certs/sharex-legacy/tls.crt
+            keyFile: /certs/sharex-legacy/tls.key
+          - certFile: /certs/staging-nsadmin-legacy/tls.crt
+            keyFile: /certs/staging-nsadmin-legacy/tls.key
+          - certFile: /certs/traefik-legacy/tls.crt
+            keyFile: /certs/traefik-legacy/tls.key
+          - certFile: /certs/trello-legacy/tls.crt
+            keyFile: /certs/trello-legacy/tls.key
+          - certFile: /certs/unifi-legacy/tls.crt
+            keyFile: /certs/unifi-legacy/tls.key
+          - certFile: /certs/vpn-legacy/tls.crt
+            keyFile: /certs/vpn-legacy/tls.key
+          options:
+            default:
+              minVersion: VersionTLS12
+              sniStrict: true
