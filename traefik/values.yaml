@@ -23,7 +23,7 @@ traefik:
       enabled: true
 
       # -- The router match rule used for the dashboard ingressRoute
-      matchRule: Host(`{{ .Values.ingressHost }}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+      matchRule:
 
       # -- Specify the allowed entrypoints to use for the dashboard ingress route, (e.g. traefik, web, websecure).
       # By default, it's using traefik entrypoint, which is not exposed.

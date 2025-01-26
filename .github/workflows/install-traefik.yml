@@ -48,6 +48,10 @@ jobs:
         run: |
           RESULT=''
           while IFS= read -r URL; do
+            if [ ! "$RESULT" ]; then
+              RESULT="$URL"
+              continue
+            fi
             RESULT="$URL,$RESULT"
           done < <(echo "$TRAEFIK_LEGACY_URLS" | jq -r '.[]')
           echo 'legacy_urls='"$RESULT" >> "$GITHUB_OUTPUT"
@@ -61,7 +65,7 @@ jobs:
             --dependency-update \
             -n traefik \
             -f traefik/values.yaml \
-            --set "traefik.ingressHost=$INGRESS_HOST" \
+            --set "traefik.ingressRoute.dashboard.matchRule=Host(`$INGRESS_HOST`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))" \
             --set "traefik.certificatesResolvers.letsencrypt.acme.email=$ACME_EMAIL" \
             --set "traefik.legacyUrls={$LEGACY_URLS}"
         env:
