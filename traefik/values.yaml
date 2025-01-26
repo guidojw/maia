@@ -131,7 +131,7 @@ traefik:
       - web
       - websecure
       routes:
-      - match: {{ include "traefik.tcpRouterRule" .Values.legacyUrls }}
+      - match: "{{ include \"traefik.tcpRouterRule\" .Values.legacyUrls }}"
         services:
         - name: legacy-traefik
           tls: true
