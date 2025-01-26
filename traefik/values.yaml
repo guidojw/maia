@@ -132,6 +132,7 @@ traefik:
         services:
         - name: legacy-traefik
           port: 443
+          nativeLB: true
           tls: true
       tls:
         passthrough: true
