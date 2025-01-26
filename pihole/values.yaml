@@ -16,9 +16,9 @@ pihole:
     type: LoadBalancer
 
     # -- A fixed `spec.loadBalancerIP` for the DNS Service
-    loadBalancerIP: "192.168.31.25"
+    loadBalancerIP: 192.168.31.25
     # -- A fixed `spec.loadBalancerIP` for the IPv6 DNS Service
-    loadBalancerIPv6: ""
+    loadBalancerIPv6:
 
   # -- Configuration for the DHCP service on port 67
   serviceDhcp:
@@ -37,24 +37,24 @@ pihole:
     # TZ: UTC
     REV_SERVER: true
     REV_SERVER_TARGET: 192.168.1.1
-    REV_SERVER_CIDR: "192.168.1.0/24"
+    REV_SERVER_CIDR: 192.168.1.0/24
 
   # -- Use an existing secret for the admin password.
   admin:
     # -- Specify an existing secret to use as admin password
-    existingSecret: "admin-password"
+    existingSecret: admin-password
 
   # -- default upstream DNS 1 server to use
-  DNS1: "1.1.1.2;2606:4700:4700::1112"
+  DNS1: 1.1.1.2;2606:4700:4700::1112
   # -- default upstream DNS 2 server to use
-  DNS2: "1.0.0.2;2606:4700:4700::1002"
+  DNS2: 1.0.0.2;2606:4700:4700::1002
 
   dnsmasq:
     # -- Dnsmasq reads the /etc/hosts file to resolve ips. You can add additional entries if you like
     additionalHostsEntries:
     # - 192.168.0.3     host4
     # - 192.168.0.4     host5
-    - "192.168.31.2     pandora.lan"
+    - 192.168.31.2     pandora.lan
 
     # -- Here we specify custom cname entries that should point to `A` records or
     # elements in customDnsEntries array.
@@ -75,65 +75,65 @@ pihole:
   # If you want to provide blocklists, add them here.
   # - https://hosts-file.net/grm.txt
   # - https://reddestdream.github.io/Projects/MinimalHosts/etc/MinimalHostsBlocker/minimalhosts
-  - "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-  - "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt"
-  - "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Spam/hosts"
-  - "https://v.firebog.net/hosts/static/w3kbl.txt"
-  - "https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt"
-  - "https://someonewhocares.org/hosts/zero/hosts"
-  - "https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts"
-  - "https://winhelp2002.mvps.org/hosts.txt"
-  - "https://v.firebog.net/hosts/neohostsbasic.txt"
-  - "https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt"
-  - "https://paulgb.github.io/BarbBlock/blacklists/hosts-file.txt"
-  - "https://adaway.org/hosts.txt"
-  - "https://v.firebog.net/hosts/AdguardDNS.txt"
-  - "https://v.firebog.net/hosts/Admiral.txt"
-  - "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt"
-  - "https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt"
-  - "https://v.firebog.net/hosts/Easylist.txt"
-  - "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext"
-  - "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/UncheckyAds/hosts"
-  - "https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts"
-  - "https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts"
-  - "https://v.firebog.net/hosts/Easyprivacy.txt"
-  - "https://v.firebog.net/hosts/Prigent-Ads.txt"
-  - "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.2o7Net/hosts"
-  - "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt"
-  - "https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt"
-  - "https://raw.githubusercontent.com/Zelo72/rpi/master/pihole/blocklists/kees1958.txt"
-  - "https://hostfiles.frogeye.fr/multiparty-trackers-hosts.txt"
-  - "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt"
-  - "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/android-tracking.txt"
-  - "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt"
-  - "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt"
-  - "https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
-  - "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt"
-  - "https://osint.digitalside.it/Threat-Intel/lists/latestdomains.txt"
-  - "https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt"
-  - "https://v.firebog.net/hosts/Prigent-Crypto.txt"
-  - "https://bitbucket.org/ethanr/dns-blacklists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt"
-  - "https://phishing.army/download/phishing_army_blocklist_extended.txt"
-  - "https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-malware.txt"
-  - "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt"
-  - "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Risk/hosts"
-  - "https://urlhaus.abuse.ch/downloads/hostfile/"
-  - "https://v.firebog.net/hosts/Prigent-Malware.txt"
-  - "https://v.firebog.net/hosts/Shalla-mal.txt"
-  - "https://zerodot1.gitlab.io/CoinBlockerLists/hosts_browser"
-  - "https://raw.githubusercontent.com/anudeepND/blacklist/master/facebook.txt"
+  - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+  - https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Spam/hosts
+  - https://v.firebog.net/hosts/static/w3kbl.txt
+  - https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt
+  - https://someonewhocares.org/hosts/zero/hosts
+  - https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts
+  - https://winhelp2002.mvps.org/hosts.txt
+  - https://v.firebog.net/hosts/neohostsbasic.txt
+  - https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt
+  - https://paulgb.github.io/BarbBlock/blacklists/hosts-file.txt
+  - https://adaway.org/hosts.txt
+  - https://v.firebog.net/hosts/AdguardDNS.txt
+  - https://v.firebog.net/hosts/Admiral.txt
+  - https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt
+  - https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+  - https://v.firebog.net/hosts/Easylist.txt
+  - https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/UncheckyAds/hosts
+  - https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts
+  - https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts
+  - https://v.firebog.net/hosts/Easyprivacy.txt
+  - https://v.firebog.net/hosts/Prigent-Ads.txt
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.2o7Net/hosts
+  - https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt
+  - https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt
+  - https://raw.githubusercontent.com/Zelo72/rpi/master/pihole/blocklists/kees1958.txt
+  - https://hostfiles.frogeye.fr/multiparty-trackers-hosts.txt
+  - https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt
+  - https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/android-tracking.txt
+  - https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt
+  - https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt
+  - https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt
+  - https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt
+  - https://osint.digitalside.it/Threat-Intel/lists/latestdomains.txt
+  - https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt
+  - https://v.firebog.net/hosts/Prigent-Crypto.txt
+  - https://bitbucket.org/ethanr/dns-blacklists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt
+  - https://phishing.army/download/phishing_army_blocklist_extended.txt
+  - https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-malware.txt
+  - https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Risk/hosts
+  - https://urlhaus.abuse.ch/downloads/hostfile/
+  - https://v.firebog.net/hosts/Prigent-Malware.txt
+  - https://v.firebog.net/hosts/Shalla-mal.txt
+  - https://zerodot1.gitlab.io/CoinBlockerLists/hosts_browser
+  - https://raw.githubusercontent.com/anudeepND/blacklist/master/facebook.txt
 
   # -- list of whitelisted domains to import during initial start of the container
   whitelist:
   # If you want to provide whitelisted domains, add them here.
   # - clients4.google.com
   - sentry.io
-  - "s1.sentry-cdn.com"
+  - s1.sentry-cdn.com
   - www.googleadservices.com
   - fonts.gstatic.com
   - eu.docusign.net
-  - "(\\.|^)openvpn\\.net$"
-  - "(\\.|^)openvpn\\.com$"
+  - (\\.|^)openvpn\\.net$
+  - (\\.|^)openvpn\\.com$
   - fntech.com
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
