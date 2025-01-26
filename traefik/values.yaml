@@ -59,9 +59,6 @@ traefik:
       # use `kubectl port-forward` or create a secure ingress
       expose:
         default: true
-    web:
-      # -- See [upstream documentation](https://doc.traefik.io/traefik/routing/entrypoints/#allowacmebypass)
-      allowACMEByPass: true
 
   service:
     # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
@@ -136,7 +133,6 @@ traefik:
         - name: legacy-traefik
           port: 443
           nativeLB: true
-          # tls: true
       tls:
         passthrough: true
 
