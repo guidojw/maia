@@ -40,7 +40,12 @@ jobs:
         run: |
           RESULT=''
           while IFS= read -r URL; do
-            RESULT="cname=$URL\,pandora.lan,$RESULT"
+            ENTRY="cname=$URL\,pandora.lan"
+            if [ ! "$RESULT" ]; then
+              RESULT="$ENTRY"
+              continue
+            fi
+            RESULT="$ENTRY,$RESULT"
           done < <(echo "$TRAEFIK_URLS" | jq -r '.[]')
           echo 'custom_cname_entries='"$RESULT" >> "$GITHUB_OUTPUT"
         env:
