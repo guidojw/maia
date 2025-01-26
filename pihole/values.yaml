@@ -132,8 +132,8 @@ pihole:
   - www.googleadservices.com
   - fonts.gstatic.com
   - eu.docusign.net
-  - (\\.|^)openvpn\\.net$
-  - (\\.|^)openvpn\\.com$
+  # - (\.|^)openvpn\.net$
+  # - (\.|^)openvpn\.com$
   - fntech.com
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
