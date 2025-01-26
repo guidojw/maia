@@ -102,21 +102,19 @@ traefik:
     spec:
       ports:
       - port: 443
-        protocol: TCP
         targetPort: 443
-        name: https
-      clusterIP: None
-      type: ClusterIP
 
   - apiVersion: discovery.k8s.io/v1
     kind: EndpointSlice
     metadata:
-      name: legacy-traefik
+      name: legacy-traefik-1
       labels:
         kubernetes.io/service-name: legacy-traefik
     addressType: IPv4
     ports:
-    - port: 443
+    - appProtocol: https
+      protocol: TCP
+      port: 443
     endpoints:
     - addresses:
       - 192.168.1.55
