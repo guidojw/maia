@@ -65,7 +65,7 @@ jobs:
             --dependency-update \
             -n traefik \
             -f traefik/values.yaml \
-            --set "traefik.ingressRoute.dashboard.matchRule=Host(`$INGRESS_HOST`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))" \
+            --set "traefik.ingressRoute.dashboard.matchRule=Host(\`$INGRESS_HOST\`) && (PathPrefix(\`/dashboard\`) || PathPrefix(\`/api\`))" \
             --set "traefik.certificatesResolvers.letsencrypt.acme.email=$ACME_EMAIL" \
             --set "traefik.legacyUrls={$LEGACY_URLS}"
         env:
