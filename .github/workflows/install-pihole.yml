@@ -1,0 +1,70 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - pihole/**
+  workflow_dispatch:
+
+jobs:
+  helm_install:
+    name: Helm install Pi-hole
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+        with:
+          version: v3.11.1
+
+      - name: Create kubeconfig file
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          mkdir ~/.kube
+          echo "$KUBECONFIG" > ~/.kube/config
+          chmod go-r ~/.kube/config
+
+      - name: Mask Traefik URLs
+        run: |
+          while IFS= read -r URL; do
+            echo '::add-mask::'"$URL"
+          done < <(echo "$TRAEFIK_URLS" | jq -r '.[]')
+        env:
+          TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
+
+      - name: Get custom CNAME entries
+        id: get_custom_cname_entries
+        run: |
+          RESULT=''
+          while IFS= read -r URL; do
+            RESULT="cname=$URL\,pandora.lan,$RESULT"
+          done < <(echo "$TRAEFIK_URLS" | jq -r '.[]')
+          echo 'custom_cname_entries='"$RESULT" >> "$GITHUB_OUTPUT"
+        env:
+          TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
+
+      - name: Get Pi-hole host
+        id: get_host
+        run: |
+          URL="$(echo "$TRAEFIK_URLS" | jq -r '.pihole')"
+          echo 'ingress_host='"$URL" >> "$GITHUB_OUTPUT"
+        env:
+          TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
+
+      - name: Helm install Pi-hole
+        run: |
+          helm upgrade pihole pihole \
+            --atomic \
+            --dependency-update \
+            -n pihole \
+            -f pihole/values.yaml \
+            --set "pihole.serviceDns.loadBalancerIPv6=$PIHOLE_IPV6" \
+            --set "pihole.dnsmasq.customCnameEntries={$CUSTOM_CNAME_ENTRIES}" \
+            --set "pihole.ingressHost=$INGRESS_HOST"
+        env:
+          PIHOLE_IPV6: ${{ secrets.PIHOLE_IPV6 }}
+          CUSTOM_CNAME_ENTRIES: ${{ steps.get_custom_cname_entries.outputs.custom_cname_entries }}
+          INGRESS_HOST: ${{ steps.get_host.outputs.ingress_host }}
