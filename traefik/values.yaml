@@ -112,8 +112,8 @@ traefik:
     kind: EndpointSlice
     metadata:
       name: legacy-traefik-1
-    labels:
-      kubernetes.io/service-name: legacy-traefik
+      labels:
+        kubernetes.io/service-name: legacy-traefik
     addressType: IPv4
     ports:
     - name: https
