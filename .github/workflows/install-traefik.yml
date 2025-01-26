@@ -1,9 +1,9 @@
 on:
   push:
-    branches:
-      - main
-    paths:
-      - traefik/**
+    # branches:
+    #   - main
+    # paths:
+    #   - traefik/**
   workflow_dispatch:
 
 jobs:
@@ -27,6 +27,33 @@ jobs:
           echo "$KUBECONFIG" > ~/.kube/config
           chmod go-r ~/.kube/config
 
+      - name: Mask Traefik URLs
+        run: |
+          while IFS= read -r URL; do
+            echo '::add-mask::'"$URL"
+          done < <(echo "$TRAEFIK_URLS" | jq -r '.[]')
+        env:
+          TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
+
+      - name: Get Traefik host
+        id: get_host
+        run: |
+          URL="$(echo "$TRAEFIK_URLS" | jq -r '.traefik')"
+          echo 'ingress_host='"$URL" >> "$GITHUB_OUTPUT"
+        env:
+          TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
+
+      - name: Get legacy URLs
+        id: get_legacy_urls
+        run: |
+          RESULT=''
+          while IFS= read -r URL; do
+            RESULT="$URL,$RESULT"
+          done < <(echo "$TRAEFIK_LEGACY_URLS" | jq -r '.[]')
+          echo 'legacy_urls='"$RESULT" >> "$GITHUB_OUTPUT"
+        env:
+          TRAEFIK_LEGACY_URLS: ${{ secrets.TRAEFIK_LEGACY_URLS }}
+
       - name: Helm install Traefik
         run: |
           helm upgrade traefik traefik \
@@ -34,8 +61,10 @@ jobs:
             --dependency-update \
             -n traefik \
             -f traefik/values.yaml \
+            -- set "traefik.ingressHost=$INGRESS_HOST" \
             --set "traefik.certificatesResolvers.letsencrypt.acme.email=$ACME_EMAIL" \
-            --set "traefik.dynamicConfigUrls={$DYNAMIC_CONFIG_URLS}"
+            --set "traefik.legacyUrls={$LEGACY_URLS}"
         env:
+          INGRESS_HOST: ${{ steps.get_host.outputs.ingress_host }}
           ACME_EMAIL: ${{ secrets.TRAEFIK_ACME_EMAIL }}
-          DYNAMIC_CONFIG_URLS: ${{ secrets.TRAEFIK_DYNAMIC_CONFIG_URLS }}
+          LEGACY_URLS: ${{ steps.get_legacy_urls.outputs.legacy_urls }}

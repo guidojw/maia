@@ -1,5 +1,6 @@
-# Default values for Traefik
 traefik:
+  # Default values for Traefik
+
   deployment:
     # -- Additional initContainers (e.g. for setting file permission as shown below)
     initContainers:
@@ -20,6 +21,16 @@ traefik:
     dashboard:
       # -- Create an IngressRoute for the dashboard
       enabled: true
+
+      # -- The router match rule used for the dashboard ingressRoute
+      matchRule: Host(`{{ .Values.ingressHost }}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+
+      # -- Specify the allowed entrypoints to use for the dashboard ingress route, (e.g. traefik, web, websecure).
+      # By default, it's using traefik entrypoint, which is not exposed.
+      # /!\ Do not expose your dashboard without any protection over the internet /!\
+      entryPoints:
+      - web
+      - websecure
 
   providers:  # @schema additionalProperties: false
     kubernetesIngress:
@@ -93,7 +104,7 @@ traefik:
   # See [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)
   # Use curly braces to pass values: `helm install --set="additionalArguments={--providers.kubernetesingress.ingressclass=traefik-internal,--log.level=DEBUG}"`
   additionalArguments:
-  - "--providers.file.filename=/config/config.yml"
+  - --providers.file.filename=/config/config.yml
 
   ports:
     traefik:
@@ -109,7 +120,7 @@ traefik:
   service:
     # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
     annotations:
-      "io.cilium/lb-ipam-ips": "192.168.31.2"
+      io.cilium/lb-ipam-ips: 192.168.31.2
 
   persistence:
     # -- Enable persistence using Persistent Volume Claims
@@ -151,9 +162,9 @@ traefik:
           routers:
             legacy-router:
               entryPoints:
-                - web
-                - websecure
-              rule: {{ include "traefik.tcpRouterRule" .Values.dynamicConfigUrls | quote }}
+              - web
+              - websecure
+              rule: {{ include "traefik.tcpRouterRule" .Values.legacyUrls | quote }}
               service: traefik
               tls:
                 passthrough: true
@@ -162,7 +173,7 @@ traefik:
             traefik:
               loadbalancer:
                 servers:
-                - address: "192.168.1.55:443"
+                - address: 192.168.1.55:443
 
         tls:
           certificates:
