@@ -103,6 +103,7 @@ traefik:
       ports:
       - port: 443
         targetPort: 443
+      clusterIP: None
 
   - apiVersion: discovery.k8s.io/v1
     kind: EndpointSlice
