@@ -56,7 +56,6 @@ jobs:
 
       - name: Helm install Pi-hole
         run: |
-          echo '::add-mask::'"$PIHOLE_IPV6"
           helm upgrade pihole pihole \
             --atomic \
             --dependency-update \
