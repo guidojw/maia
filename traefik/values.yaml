@@ -59,7 +59,6 @@ traefik:
       # use `kubectl port-forward` or create a secure ingress
       expose:
         default: true
-    websecure:
       # -- See [upstream documentation](https://doc.traefik.io/traefik/routing/entrypoints/#allowacmebypass)
       allowACMEByPass: true
 
