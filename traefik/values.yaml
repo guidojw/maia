@@ -46,65 +46,8 @@ traefik:
       # -- To enable access logs
       enabled: false
 
-  # -- Add volumes to the traefik pod. The volume name will be passed to tpl.
-  # This can be used to mount a cert pair or a configmap that holds a config.toml file.
-  # After the volume has been mounted, add the configs into traefik by using the `additionalArguments` list below, eg:
-  # `additionalArguments:
-  # - "--providers.file.filename=/config/dynamic.toml"
-  # - "--ping"
-  # - "--ping.entrypoint=web"`
-  volumes:
-  - name: dynamic-config
-    mountPath: /config
-    type: configMap
-  - name: cloud-legacy-cert
-    mountPath: /certs/cloud-legacy
-    type: secret
-  - name: docker-legacy-cert
-    mountPath: /certs/docker-legacy
-    type: secret
-  - name: homeassistant-legacy-cert
-    mountPath: /certs/homeassistant-legacy
-    type: secret
-  - name: nsadmin-legacy-cert
-    mountPath: /certs/nsadmin-legacy
-    type: secret
-  - name: onlyoffice-legacy-cert
-    mountPath: /certs/onlyoffice-legacy
-    type: secret
-  - name: pihole-legacy-cert
-    mountPath: /certs/pihole-legacy
-    type: secret
-  - name: rudolfs-legacy-cert
-    mountPath: /certs/rudolfs-legacy
-    type: secret
-  - name: sharex-legacy-cert
-    mountPath: /certs/sharex-legacy
-    type: secret
-  - name: staging-nsadmin-legacy-cert
-    mountPath: /certs/staging-nsadmin-legacy
-    type: secret
-  - name: traefik-legacy-cert
-    mountPath: /certs/traefik-legacy
-    type: secret
-  - name: trello-legacy-cert
-    mountPath: /certs/trello-legacy
-    type: secret
-  - name: unifi-legacy-cert
-    mountPath: /certs/unifi-legacy
-    type: secret
-  - name: vpn-legacy-cert
-    mountPath: /certs/vpn-legacy
-    type: secret
-
   # -- Global command arguments to be passed to all traefik's pods
   globalArguments: []
-
-  # -- Additional arguments to be passed at Traefik's binary
-  # See [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)
-  # Use curly braces to pass values: `helm install --set="additionalArguments={--providers.kubernetesingress.ingressclass=traefik-internal,--log.level=DEBUG}"`
-  additionalArguments:
-  - --providers.file.filename=/config/config.yml
 
   ports:
     traefik:
@@ -135,7 +78,7 @@ traefik:
   certificatesResolvers:
     letsencrypt:
       acme:
-        email: ""
+        email:
         storage: /data/acme.json
         httpChallenge:
           entrypoint: web
@@ -153,58 +96,72 @@ traefik:
   # See #595 for more details and traefik/tests/values/extra.yaml for example.
   extraObjects:
   - apiVersion: v1
-    kind: ConfigMap
+    kind: Service
     metadata:
-      name: dynamic-config
-    data:
-      config.yml: |
-        tcp:
-          routers:
-            legacy-router:
-              entryPoints:
-              - web
-              - websecure
-              rule: {{ include "traefik.tcpRouterRule" .Values.legacyUrls | quote }}
-              service: traefik
-              tls:
-                passthrough: true
+      name: legacy-traefik
+    spec:
+      ports:
+      - name: https
+        protocol: TCP
+        port: 443
+        targetPort: 443
+      clusterIP: None
+      type: ClusterIP
 
-          services:
-            traefik:
-              loadbalancer:
-                servers:
-                - address: 192.168.1.55:443
+  - apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata:
+      name: legacy-traefik-1
+    addressType: IPv4
+    ports:
+    - name: https
+      appProtocol: https
+      protocol: TCP
+      port: 443
+    endpoints:
+    - addresses:
+      - 192.168.1.55
 
-        tls:
-          certificates:
-          - certFile: /certs/cloud-legacy/tls.crt
-            keyFile: /certs/cloud-legacy/tls.key
-          - certFile: /certs/docker-legacy/tls.crt
-            keyFile: /certs/docker-legacy/tls.key
-          - certFile: /certs/homeassistant-legacy/tls.crt
-            keyFile: /certs/homeassistant-legacy/tls.key
-          - certFile: /certs/nsadmin-legacy/tls.crt
-            keyFile: /certs/nsadmin-legacy/tls.key
-          - certFile: /certs/onlyoffice-legacy/tls.crt
-            keyFile: /certs/onlyoffice-legacy/tls.key
-          - certFile: /certs/pihole-legacy/tls.crt
-            keyFile: /certs/pihole-legacy/tls.key
-          - certFile: /certs/rudolfs-legacy/tls.crt
-            keyFile: /certs/rudolfs-legacy/tls.key
-          - certFile: /certs/sharex-legacy/tls.crt
-            keyFile: /certs/sharex-legacy/tls.key
-          - certFile: /certs/staging-nsadmin-legacy/tls.crt
-            keyFile: /certs/staging-nsadmin-legacy/tls.key
-          - certFile: /certs/traefik-legacy/tls.crt
-            keyFile: /certs/traefik-legacy/tls.key
-          - certFile: /certs/trello-legacy/tls.crt
-            keyFile: /certs/trello-legacy/tls.key
-          - certFile: /certs/unifi-legacy/tls.crt
-            keyFile: /certs/unifi-legacy/tls.key
-          - certFile: /certs/vpn-legacy/tls.crt
-            keyFile: /certs/vpn-legacy/tls.key
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRouteTCP
+    metadata:
+      name: legacy-router
+    spec:
+      entryPoints:
+      - web
+      - websecure
+      routes:
+      - match: {{ include "traefik.tcpRouterRule" .Values.legacyUrls }}
+        services:
+        - name: legacy-traefik
+          tls: true
+      tls:
+        passthrough: true
 
-          options:
-            default:
-              minVersion: VersionTLS12
-              sniStrict: true
+  - apiVersion: traefik.io/v1alpha1
+    kind: TLSStore
+    metadata:
+      name: default
+    spec:
+      certificates:
+      - secretName: cloud-legacy-cert
+      - secretName: docker-legacy-cert
+      - secretName: homeassistant-legacy-cert
+      - secretName: nsadmin-legacy-cert
+      - secretName: onlyoffice-legacy-cert
+      - secretName: pihole-legacy-cert
+      - secretName: rudolfs-legacy-cert
+      - secretName: sharex-legacy-cert
+      - secretName: staging-nsadmin-legacy-cert
+      - secretName: traefik-legacy-cert
+      - secretName: trello-legacy-cert
+      - secretName: unifi-legacy-cert
+      - secretName: vpn-legacy-cert
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: TLSOption
+    metadata:
+      name: default
+    spec:
+      minVersion: VersionTLS12
+      sniStrict: true
