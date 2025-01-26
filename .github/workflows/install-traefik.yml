@@ -61,7 +61,7 @@ jobs:
             --dependency-update \
             -n traefik \
             -f traefik/values.yaml \
-            -- set "traefik.ingressHost=$INGRESS_HOST" \
+            --set "traefik.ingressHost=$INGRESS_HOST" \
             --set "traefik.certificatesResolvers.letsencrypt.acme.email=$ACME_EMAIL" \
             --set "traefik.legacyUrls={$LEGACY_URLS}"
         env:
