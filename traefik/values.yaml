@@ -1,5 +1,7 @@
 traefik:
   # Default values for Traefik
+  # This is a YAML-formatted file.
+  # Declare variables to be passed into templates
 
   deployment:
     # -- Additional initContainers (e.g. for setting file permission as shown below)
@@ -33,6 +35,10 @@ traefik:
       - websecure
 
   providers:  # @schema additionalProperties: false
+    kubernetesCRD:
+      # -- Allows to reference ExternalName services in IngressRoute
+      allowExternalNameServices: true
+
     kubernetesIngress:
       # -- When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed.
       ingressClass: traefik # @schema type:[string, null]
@@ -100,24 +106,8 @@ traefik:
     metadata:
       name: legacy-traefik
     spec:
-      ports:
-      - port: 443
-        targetPort: 443
-
-  - apiVersion: discovery.k8s.io/v1
-    kind: EndpointSlice
-    metadata:
-      name: legacy-traefik-1
-      labels:
-        kubernetes.io/service-name: legacy-traefik
-    addressType: IPv4
-    ports:
-    - appProtocol: https
-      protocol: TCP
-      port: 443
-    endpoints:
-    - addresses:
-      - 192.168.1.55
+      externalName: 192.168.1.55
+      type: ExternalName
 
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRouteTCP
@@ -132,7 +122,6 @@ traefik:
         services:
         - name: legacy-traefik
           port: 443
-          nativeLB: true
       tls:
         passthrough: true
 
