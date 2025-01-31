@@ -158,7 +158,7 @@ traefik:
     spec:
       secretName: traefik-cert
       dnsNames:
-      - {{ .Values.ingressHost }}
+      - "{{ .Values.ingressHost }}"
       issuerRef:
         name: letsencrypt-staging
         kind: ClusterIssuer
