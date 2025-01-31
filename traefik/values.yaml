@@ -84,6 +84,7 @@ traefik:
         # Same sets of parameters: to, scheme, permanent and priority.
         # https://docs.traefik.io/routing/entrypoints/#redirection
         entryPoint:
+          to: websecure
           scheme: https
           permanent: true
     websecure:
