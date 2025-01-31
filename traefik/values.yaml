@@ -31,7 +31,7 @@ traefik:
       - websecure
       # -- Additional ingressRoute middlewares (e.g. for authentication)
       middlewares:
-      - dashboard-auth
+      - name: dashboard-auth
       # -- TLS options (e.g. secret containing certificate)
       tls:
         secretName: traefik-cert
