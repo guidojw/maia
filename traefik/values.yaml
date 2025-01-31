@@ -3,18 +3,6 @@ traefik:
   # This is a YAML-formatted file.
   # Declare variables to be passed into templates
 
-  deployment:
-    # -- Additional initContainers (e.g. for setting file permission as shown below)
-    initContainers:
-    # The "volume-permissions" init container is required if you run into permission issues.
-    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
-    - name: volume-permissions
-      image: busybox:latest
-      command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
-      volumeMounts:
-      - mountPath: /data
-        name: data
-
   # -- Create a default IngressClass for Traefik
   ingressClass:  # @schema additionalProperties: false
     isDefaultClass: false
@@ -123,30 +111,6 @@ traefik:
     # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
     annotations:
       io.cilium/lb-ipam-ips: 192.168.31.2
-
-  persistence:
-    # -- Enable persistence using Persistent Volume Claims
-    # ref: http://kubernetes.io/docs/user-guide/persistent-volumes/.
-    # It can be used to store TLS certificates along with `certificatesResolvers.<name>.acme.storage`  option
-    enabled: true
-    storageClass: local-path
-
-  # -- Certificates resolvers configuration.
-  # Ref: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers
-  # See EXAMPLES.md for more details.
-  certificatesResolvers:
-    letsencrypt:
-      acme:
-        email:
-        storage: /data/acme.json
-        httpChallenge:
-          entrypoint: web
-
-  # -- [Pod Security Context](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context)
-  # @default -- See _values.yaml_
-  podSecurityContext:
-    fsGroup: 65532
-    fsGroupChangePolicy: OnRootMismatch
 
   #
   # -- Extra objects to deploy (value evaluated as a template)
