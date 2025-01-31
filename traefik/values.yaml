@@ -127,7 +127,7 @@ traefik:
       dnsNames:
       - "{{ .Values.ingressHost }}"
       issuerRef:
-        name: letsencrypt-staging
+        name: letsencrypt-production
         kind: ClusterIssuer
 
   - apiVersion: traefik.io/v1alpha1
