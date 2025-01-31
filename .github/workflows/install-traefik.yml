@@ -67,6 +67,7 @@ jobs:
             -f traefik/values.yaml \
             --set "traefik.ingressRoute.dashboard.matchRule=Host(\`$INGRESS_HOST\`) && (PathPrefix(\`/dashboard\`) || PathPrefix(\`/api\`))" \
             --set "traefik.certificatesResolvers.letsencrypt.acme.email=$ACME_EMAIL" \
+            --set "traefik.ingressHost=$INGRESS_HOST" \
             --set "traefik.legacyUrls={$LEGACY_URLS}"
         env:
           INGRESS_HOST: ${{ steps.get_host.outputs.ingress_host }}

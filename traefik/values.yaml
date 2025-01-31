@@ -34,16 +34,17 @@ traefik:
     dashboard:
       # -- Create an IngressRoute for the dashboard
       enabled: true
-
       # -- The router match rule used for the dashboard ingressRoute
       matchRule:
-
       # -- Specify the allowed entrypoints to use for the dashboard ingress route, (e.g. traefik, web, websecure).
       # By default, it's using traefik entrypoint, which is not exposed.
       # /!\ Do not expose your dashboard without any protection over the internet /!\
       entryPoints:
       - web
       - websecure
+      # -- TLS options (e.g. secret containing certificate)
+      tls:
+        secretName: traefik-cert
 
   providers:  # @schema additionalProperties: false
     kubernetesCRD:
@@ -76,6 +77,15 @@ traefik:
       # use `kubectl port-forward` or create a secure ingress
       expose:
         default: true
+    web:
+      redirections:
+        # -- Port Redirections
+        # Added in 2.2, one can make permanent redirects via entrypoints.
+        # Same sets of parameters: to, scheme, permanent and priority.
+        # https://docs.traefik.io/routing/entrypoints/#redirection
+        entryPoint:
+          scheme: https
+          permanent: true
     websecure:
       forwardedHeaders:
           # -- Trust forwarded headers information (X-Forwarded-*).
@@ -141,6 +151,18 @@ traefik:
   # In some cases, it can avoid the need for additional, extended or adhoc deployments.
   # See #595 for more details and traefik/tests/values/extra.yaml for example.
   extraObjects:
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: traefik-cert
+    spec:
+      secretName: traefik-cert
+      dnsNames:
+      - {{ .Values.ingressHost }}
+      issuerRef:
+        name: letsencrypt-staging
+        kind: ClusterIssuer
+
   - apiVersion: v1
     kind: Service
     metadata:
@@ -180,7 +202,7 @@ traefik:
       - secretName: rudolfs-legacy-cert
       - secretName: sharex-legacy-cert
       - secretName: staging-nsadmin-legacy-cert
-      - secretName: traefik-legacy-cert
+      - secretName: traefik-cert
       - secretName: trello-legacy-cert
       - secretName: unifi-legacy-cert
       - secretName: vpn-legacy-cert
