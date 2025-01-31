@@ -78,6 +78,8 @@ traefik:
           scheme: https
           permanent: true
     websecure:
+      # -- See [upstream documentation](https://doc.traefik.io/traefik/routing/entrypoints/#allowacmebypass)
+      allowACMEByPass: true
       forwardedHeaders:
           # -- Trust forwarded headers information (X-Forwarded-*).
         trustedIPs:
