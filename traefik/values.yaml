@@ -40,8 +40,10 @@ traefik:
       # By default, it's using traefik entrypoint, which is not exposed.
       # /!\ Do not expose your dashboard without any protection over the internet /!\
       entryPoints:
-      - web
       - websecure
+      # -- Additional ingressRoute middlewares (e.g. for authentication)
+      middlewares:
+      - dashboard-auth
       # -- TLS options (e.g. secret containing certificate)
       tls:
         secretName: traefik-cert
@@ -163,6 +165,14 @@ traefik:
       issuerRef:
         name: letsencrypt-staging
         kind: ClusterIssuer
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: dashboard-auth
+    spec:
+      basicAuth:
+        secret: basic-auth-users
 
   - apiVersion: v1
     kind: Service
