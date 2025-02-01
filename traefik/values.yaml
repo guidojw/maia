@@ -176,26 +176,7 @@ traefik:
         - name: legacy-traefik
           port: 443
       tls:
-        passthrough: true
-
-  - apiVersion: traefik.io/v1alpha1
-    kind: TLSStore
-    metadata:
-      name: default
-    spec:
-      certificates:
-      - secretName: cloud-legacy-cert
-      - secretName: docker-legacy-cert
-      - secretName: homeassistant-legacy-cert
-      - secretName: nsadmin-legacy-cert
-      - secretName: onlyoffice-legacy-cert
-      - secretName: pihole-legacy-cert
-      - secretName: rudolfs-legacy-cert
-      - secretName: sharex-legacy-cert
-      - secretName: staging-nsadmin-legacy-cert
-      - secretName: trello-legacy-cert
-      - secretName: unifi-legacy-cert
-      - secretName: vpn-legacy-cert
+        secretName: legacy-cert
 
   - apiVersion: traefik.io/v1alpha1
     kind: TLSOption
