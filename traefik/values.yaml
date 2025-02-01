@@ -174,7 +174,7 @@ traefik:
       - match: "{{ include \"traefik.tcpRouterRule\" .Values.legacyUrls }}"
         services:
         - name: legacy-traefik
-          port: 443
+          port: 80
       tls:
         secretName: legacy-cert
 
