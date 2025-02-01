@@ -121,6 +121,20 @@ traefik:
         name: letsencrypt-production
         kind: ClusterIssuer
 
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: legacy-cert
+    spec:
+      secretName: legacy-cert
+      dnsNames:
+      {{- range .Values.legacyUrls }}
+      - {{ . }}
+      {{- end }}
+      issuerRef:
+        name: letsencrypt-production
+        kind: ClusterIssuer
+
   # Replace with web.redirections in the future when the DNS01 challenge is used.
   - apiVersion: traefik.io/v1alpha1
     kind: Middleware
