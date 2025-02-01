@@ -50,10 +50,10 @@ traefik:
     general:
       # By default, the level is set to INFO.
       # -- Alternative logging levels are TRACE, DEBUG, INFO, WARN, ERROR, FATAL, and PANIC.
-      level: INFO
+      level: TRACE
     access:
       # -- To enable access logs
-      enabled: false
+      enabled: true
 
   # -- Global command arguments to be passed to all traefik's pods
   globalArguments: []
