@@ -1,0 +1,13 @@
+---
+# https://github.com/unifi-utilities/unifios-utilities/tree/main/nspawn-container
+- name: Create container
+  include_tasks: create_container.yml
+
+- name: Configure container
+  include_tasks: configure_container.yml
+
+- name: Configure persistence
+  include_tasks: configure_persistence.yml
+
+- name: Install services
+  include_tasks: install_services.yml
