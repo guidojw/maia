@@ -176,6 +176,7 @@ traefik:
       - match: "{{ include \"traefik.tcpRouterRule\" .Values.legacyUrls }}"
         services:
         - name: legacy-traefik
+          port: 443
       tls:
         passthrough: true
 
