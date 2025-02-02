@@ -32,6 +32,7 @@ jobs:
           helm upgrade cert-manager cert-manager \
             --atomic \
             --dependency-update \
+            --skip-schema-validation \
             -n cert-manager \
             -f cert-manager/values.yaml \
             --set "cert-manager.acmeEmail=$ACME_EMAIL"

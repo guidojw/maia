@@ -168,6 +168,18 @@ pihole:
   #           url.redirect = (".*" => "https://%0$0")
   #         }
   #       }
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: pihole-cert
+    spec:
+      secretName: pihole-cert
+      dnsNames:
+      - "{{ .Values.ingressHost }}"
+      issuerRef:
+        name: letsencrypt-production
+        kind: ClusterIssuer
+
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
@@ -182,3 +194,5 @@ pihole:
         services:
         - name: pihole-web
           port: 80
+      tls:
+        secretName: pihole-cert
