@@ -1,38 +1,47 @@
 traefik:
   # Default values for Traefik
-
-  deployment:
-    # -- Additional initContainers (e.g. for setting file permission as shown below)
-    initContainers:
-    # The "volume-permissions" init container is required if you run into permission issues.
-    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
-    - name: volume-permissions
-      image: busybox:latest
-      command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
-      volumeMounts:
-      - mountPath: /data
-        name: data
+  # This is a YAML-formatted file.
+  # Declare variables to be passed into templates
 
   # -- Create a default IngressClass for Traefik
   ingressClass:  # @schema additionalProperties: false
     isDefaultClass: false
 
+  # Traefik experimental features
+  experimental:
+    # -- Enable traefik experimental plugins
+    plugins:
+    # demo:
+    #   moduleName: github.com/traefik/plugindemo
+    #   version: v0.2.1
+      plugin-rewritebody:
+        moduleName: github.com/traefik/plugin-rewritebody
+        version: v0.3.1
+
   ingressRoute:
     dashboard:
       # -- Create an IngressRoute for the dashboard
       enabled: true
-
       # -- The router match rule used for the dashboard ingressRoute
       matchRule:
-
       # -- Specify the allowed entrypoints to use for the dashboard ingress route, (e.g. traefik, web, websecure).
       # By default, it's using traefik entrypoint, which is not exposed.
       # /!\ Do not expose your dashboard without any protection over the internet /!\
       entryPoints:
-      - web
       - websecure
+      # -- Additional ingressRoute middlewares (e.g. for authentication)
+      middlewares:
+      - name: https-redirect
+      - name: dashboard-auth
+      # -- TLS options (e.g. secret containing certificate)
+      tls:
+        secretName: traefik-cert
 
   providers:  # @schema additionalProperties: false
+    kubernetesCRD:
+      # -- Allows to reference ExternalName services in IngressRoute
+      allowExternalNameServices: true
+
     kubernetesIngress:
       # -- When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed.
       ingressClass: traefik # @schema type:[string, null]
@@ -41,10 +50,10 @@ traefik:
     general:
       # By default, the level is set to INFO.
       # -- Alternative logging levels are TRACE, DEBUG, INFO, WARN, ERROR, FATAL, and PANIC.
-      level: INFO
+      level: TRACE
     access:
       # -- To enable access logs
-      enabled: false
+      enabled: true
 
   # -- Global command arguments to be passed to all traefik's pods
   globalArguments: []
@@ -59,35 +68,40 @@ traefik:
       # use `kubectl port-forward` or create a secure ingress
       expose:
         default: true
+    websecure:
+      forwardedHeaders:
+          # -- Trust forwarded headers information (X-Forwarded-*).
+        trustedIPs:
+        # Local
+        - 192.168.1.0/24
+        # Cloudflare
+        - 173.245.48.0/20
+        - 103.21.244.0/22
+        - 103.22.200.0/22
+        - 103.31.4.0/22
+        - 141.101.64.0/18
+        - 108.162.192.0/18
+        - 190.93.240.0/20
+        - 188.114.96.0/20
+        - 197.234.240.0/22
+        - 198.41.128.0/17
+        - 162.158.0.0/15
+        - 104.16.0.0/13
+        - 104.24.0.0/14
+        - 172.64.0.0/13
+        - 131.0.72.0/22
+        - 2400:cb00::/32
+        - 2606:4700::/32
+        - 2803:f800::/32
+        - 2405:b500::/32
+        - 2405:8100::/32
+        - 2a06:98c0::/29
+        - 2c0f:f248::/32
 
   service:
     # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
     annotations:
       io.cilium/lb-ipam-ips: 192.168.31.2
-
-  persistence:
-    # -- Enable persistence using Persistent Volume Claims
-    # ref: http://kubernetes.io/docs/user-guide/persistent-volumes/.
-    # It can be used to store TLS certificates along with `certificatesResolvers.<name>.acme.storage`  option
-    enabled: true
-    storageClass: local-path
-
-  # -- Certificates resolvers configuration.
-  # Ref: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers
-  # See EXAMPLES.md for more details.
-  certificatesResolvers:
-    letsencrypt:
-      acme:
-        email:
-        storage: /data/acme.json
-        httpChallenge:
-          entrypoint: web
-
-  # -- [Pod Security Context](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context)
-  # @default -- See _values.yaml_
-  podSecurityContext:
-    fsGroup: 65532
-    fsGroupChangePolicy: OnRootMismatch
 
   #
   # -- Extra objects to deploy (value evaluated as a template)
@@ -95,29 +109,69 @@ traefik:
   # In some cases, it can avoid the need for additional, extended or adhoc deployments.
   # See #595 for more details and traefik/tests/values/extra.yaml for example.
   extraObjects:
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: traefik-cert
+    spec:
+      secretName: traefik-cert
+      dnsNames:
+      - "{{ .Values.ingressHost }}"
+      issuerRef:
+        name: letsencrypt-production
+        kind: ClusterIssuer
+
+  - |
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: legacy-cert
+    spec:
+      secretName: legacy-cert
+      dnsNames:
+      {{- range .Values.legacyUrls }}
+      - {{ . }}
+      {{- end }}
+      issuerRef:
+        name: letsencrypt-production
+        kind: ClusterIssuer
+
+  # Replace with web.redirections in the future when the DNS01 challenge is used.
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: https-redirect
+    spec:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: dashboard-auth
+    spec:
+      basicAuth:
+        secret: basic-auth-users
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: api-strip
+    spec:
+      stripPrefix:
+        prefixes:
+        - /api
+
   - apiVersion: v1
     kind: Service
     metadata:
       name: legacy-traefik
     spec:
+      externalName: 192.168.1.55
+      type: ExternalName
       ports:
       - port: 443
-        targetPort: 443
-
-  - apiVersion: discovery.k8s.io/v1
-    kind: EndpointSlice
-    metadata:
-      name: legacy-traefik-1
-      labels:
-        kubernetes.io/service-name: legacy-traefik
-    addressType: IPv4
-    ports:
-    - appProtocol: https
-      protocol: TCP
-      port: 443
-    endpoints:
-    - addresses:
-      - 192.168.1.55
 
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRouteTCP
@@ -132,7 +186,6 @@ traefik:
         services:
         - name: legacy-traefik
           port: 443
-          nativeLB: true
       tls:
         passthrough: true
 
@@ -142,19 +195,7 @@ traefik:
       name: default
     spec:
       certificates:
-      - secretName: cloud-legacy-cert
-      - secretName: docker-legacy-cert
-      - secretName: homeassistant-legacy-cert
-      - secretName: nsadmin-legacy-cert
-      - secretName: onlyoffice-legacy-cert
-      - secretName: pihole-legacy-cert
-      - secretName: rudolfs-legacy-cert
-      - secretName: sharex-legacy-cert
-      - secretName: staging-nsadmin-legacy-cert
-      - secretName: traefik-legacy-cert
-      - secretName: trello-legacy-cert
-      - secretName: unifi-legacy-cert
-      - secretName: vpn-legacy-cert
+      - secretName: legacy-cert
 
   - apiVersion: traefik.io/v1alpha1
     kind: TLSOption
