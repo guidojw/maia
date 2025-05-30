@@ -161,7 +161,7 @@ traefik:
     spec:
       stripPrefix:
         prefixes:
-          - /api
+        - /api
 
   - apiVersion: v1
     kind: Service
