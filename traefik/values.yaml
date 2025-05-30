@@ -154,6 +154,15 @@ traefik:
       basicAuth:
         secret: basic-auth-users
 
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: api-strip
+    spec:
+      stripPrefix:
+        prefixes:
+          - /api
+
   - apiVersion: v1
     kind: Service
     metadata:
