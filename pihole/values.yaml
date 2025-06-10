@@ -35,10 +35,9 @@ pihole:
   # -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use
   extraEnvVars:
     # TZ: UTC
-    DNSMASQ_LISTENING: eth0
-    REV_SERVER: true
-    REV_SERVER_TARGET: 192.168.1.1
-    REV_SERVER_CIDR: 192.168.1.0/24
+    FTLCONF_dns_listeningMode: single
+    FTLCONF_dns_interface: eth0
+    FTLCONF_dns_revServers: true,192.168.1.0/24,192.168.1.1
 
   # -- Use an existing secret for the admin password.
   admin:
