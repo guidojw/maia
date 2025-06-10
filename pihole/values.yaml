@@ -32,13 +32,6 @@ pihole:
       # -- Generate a service for HTTPS traffic
       enabled: false
 
-  # -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use
-  extraEnvVars:
-    # TZ: UTC
-    REV_SERVER: true
-    REV_SERVER_TARGET: 192.168.1.1
-    REV_SERVER_CIDR: 192.168.1.0/24
-
   # -- Use an existing secret for the admin password.
   admin:
     # -- Specify an existing secret to use as admin password
@@ -135,6 +128,19 @@ pihole:
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
   - api.loganalytics.azure.com
+
+  # -- values that should be added to pihole-FTL.conf. You can use either scalars or project cm, secrets or pod fields via valueFrom
+  ftl:
+    # Add values for pihole-FTL.conf
+    # MAXDBDAYS: 14
+    # Project a variable
+    # LOCAL_IPV4:
+    #   valueFrom:
+    #     fieldRef:
+    #       fieldPath: status.podIP
+    dns_listeningMode: single
+    dns_interface: eth0
+    dns_revServers: true,192.168.1.0/24,192.168.1.1
 
   # -- any extra kubernetes manifests you might want
   extraObjects:
