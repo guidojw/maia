@@ -38,9 +38,9 @@ pihole:
     existingSecret: admin-password
 
   # -- default upstream DNS 1 server to use
-  DNS1: 1.1.1.2
+  DNS1: 1.1.1.2;2606:4700:4700::1112
   # -- default upstream DNS 2 server to use
-  DNS2: 1.0.0.2
+  DNS2: 1.0.0.2;2606:4700:4700::1002
 
   dnsmasq:
     # -- Dnsmasq reads the /etc/hosts file to resolve ips. You can add additional entries if you like
