@@ -37,6 +37,20 @@ pihole:
     # -- Specify an existing secret to use as admin password
     existingSecret: admin-password
 
+  # -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom
+  extraEnvVars:
+    # issue 360
+    # FTLCONF_dns_listeningMode: 'all'
+    # TZ: UTC
+    # Project a variable
+    # SOME_VAR:
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       key: some-var
+    #       name: my-config-map
+    TZ: Europe/Amsterdam
+    FTLCONF_webserver_port: 80,[::]:80
+
   # -- default upstream DNS 1 server to use
   DNS1: 1.1.1.2;2606:4700:4700::1112
   # -- default upstream DNS 2 server to use
@@ -101,7 +115,6 @@ pihole:
   - https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt
   - https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt
   - https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt
-  - https://osint.digitalside.it/Threat-Intel/lists/latestdomains.txt
   - https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt
   - https://v.firebog.net/hosts/Prigent-Crypto.txt
   - https://bitbucket.org/ethanr/dns-blacklists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt
@@ -128,6 +141,7 @@ pihole:
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
   - api.loganalytics.azure.com
+  - (\.|^)datadoghq.com
 
   # -- values that should be added to pihole-FTL.conf. You can use either scalars or project cm, secrets or pod fields via valueFrom
   ftl:
