@@ -202,3 +202,11 @@ pihole:
           port: 80
       tls:
         secretName: pihole-cert
+
+  podDnsConfig:
+    enabled: true
+    policy: "None"
+    nameservers:
+      - 127.0.0.1
+      - 1.0.0.1
+      - 1.0.0.2
