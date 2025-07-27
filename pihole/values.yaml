@@ -141,7 +141,7 @@ pihole:
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
   - api.loganalytics.azure.com
-  - datadoghq.com
+  - (\.|^)datadoghq.com
 
   # -- values that should be added to pihole-FTL.conf. You can use either scalars or project cm, secrets or pod fields via valueFrom
   ftl:
