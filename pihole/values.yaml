@@ -37,6 +37,20 @@ pihole:
     # -- Specify an existing secret to use as admin password
     existingSecret: admin-password
 
+  # -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom
+  extraEnvVars:
+    # issue 360
+    # FTLCONF_dns_listeningMode: 'all'
+    # TZ: UTC
+    # Project a variable
+    # SOME_VAR:
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       key: some-var
+    #       name: my-config-map
+    TZ: Europe/Amsterdam
+    FTLCONF_webserver_port: 80,[::]:80
+
   # -- default upstream DNS 1 server to use
   DNS1: 1.1.1.2;2606:4700:4700::1112
   # -- default upstream DNS 2 server to use
@@ -141,9 +155,6 @@ pihole:
     dns_listeningMode: single
     dns_interface: eth0
     dns_revServers: true,192.168.1.0/24,192.168.1.1
-
-  # -- port the container should use to expose HTTP traffic
-  webHttp: 80,[::]:80
 
   # -- any extra kubernetes manifests you might want
   extraObjects:
