@@ -37,6 +37,19 @@ pihole:
     # -- Specify an existing secret to use as admin password
     existingSecret: admin-password
 
+  # -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom
+  extraEnvVars:
+    # issue 360
+    # FTLCONF_dns_listeningMode: 'all'
+    # TZ: UTC
+    # Project a variable
+    # SOME_VAR:
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       key: some-var
+    #       name: my-config-map
+    TZ: Europe/Amsterdam
+
   # -- default upstream DNS 1 server to use
   DNS1: 1.1.1.2;2606:4700:4700::1112
   # -- default upstream DNS 2 server to use
