@@ -34,6 +34,11 @@ pihole:
 
   # -- Probes configuration
   probes:
+    # -- probes.liveness -- Configure the healthcheck for the ingress controller
+    liveness:
+      # -- Generate a liveness probe
+      # -- threshold until the probe is considered failing
+      failureThreshold: 20
     readiness:
       # -- Generate a readiness probe
       # -- defines the failure threshold for the readiness probe
