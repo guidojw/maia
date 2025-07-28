@@ -170,6 +170,16 @@ pihole:
     dns_interface: eth0
     dns_revServers: true,192.168.1.0/24,192.168.1.1
 
+  # -- any extra volumes you might want
+  extraVolumes:
+    # external-conf:
+    #   configMap:
+    #     name: pi-hole-lighttpd-external-conf
+    regexlist:
+      configMap:
+        defaultMode: 420
+        name: pihole-regexlist
+
   # -- any extra kubernetes manifests you might want
   extraObjects:
   # - apiVersion: v1
