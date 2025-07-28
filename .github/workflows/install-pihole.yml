@@ -60,13 +60,13 @@ jobs:
           TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
 
       - name: Helm install Pi-hole
+            # --set "pihole.serviceDns.loadBalancerIPv6=$PIHOLE_IPV6" \
         run: |
           helm upgrade pihole pihole \
             --atomic \
             --dependency-update \
             -n pihole \
             -f pihole/values.yaml \
-            --set "pihole.serviceDns.loadBalancerIPv6=$PIHOLE_IPV6" \
             --set "pihole.dnsmasq.customCnameEntries={$CUSTOM_CNAME_ENTRIES}" \
             --set "pihole.ingressHost=$INGRESS_HOST"
         env:
