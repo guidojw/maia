@@ -269,7 +269,7 @@ pihole:
     command:
     - sh
     - -c
-    - cp /etc/pihole/gravity.db /target/ && cat /regexlist/regexlist.list | xargs -I{} sudo sqlite3 /target/gravity.db "INSERT OR IGNORE INTO domainlist (type, domain, enabled) VALUES (2, '{}', 1);"
+    - sudo pihole -g && cp /etc/pihole/gravity.db /target/ && cat /regexlist/regexlist.list | xargs -I{} sudo sqlite3 /target/gravity.db "INSERT OR IGNORE INTO domainlist (type, domain, enabled) VALUES (2, '{}', 1);"
     volumeMounts:
     - mountPath: /target
       name: config
