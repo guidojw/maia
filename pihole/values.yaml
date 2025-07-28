@@ -32,6 +32,13 @@ pihole:
       # -- Generate a service for HTTPS traffic
       enabled: false
 
+  # -- Probes configuration
+  probes:
+    readiness:
+      # -- Generate a readiness probe
+      # -- defines the failure threshold for the readiness probe
+      failureThreshold: 20
+
   # -- Use an existing secret for the admin password.
   admin:
     # -- Specify an existing secret to use as admin password
