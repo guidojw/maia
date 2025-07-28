@@ -1,0 +1,14 @@
+---
+- name: Reactivate connection
+  listen: reactivate connection
+  command: >-
+    nmcli c up "{{ zeus_conn_name }}"
+  ignore_unreachable: true
+  notify: reconnect
+
+- name: Reconnect
+  listen: reconnect
+  wait_for_connection:
+    connect_timeout: 15
+    sleep: 5
+    timeout: 300
