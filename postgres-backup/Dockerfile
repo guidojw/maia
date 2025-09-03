@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:cosmic-20190719@sha256:7d657275047118bb77b052c4c0ae43e8a289ca2879ebfa78a703c93aa8fd686c
 
 # Install wget & gnupg2 & curl
 RUN apt-get update && apt-get install -y wget gnupg2 curl
