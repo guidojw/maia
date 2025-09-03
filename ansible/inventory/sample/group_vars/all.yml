@@ -1,0 +1,17 @@
+---
+ansible_user: ansibleuser
+
+nspawn_container_root_password: p4ssw0rd
+bgp_password: p4ssw0rd
+router_ip: "{{ ipv4_subnet | ansible.utils.nthhost(1) }}"
+k3s_node_ip: 192.168.30.222
+
+zeus_conn_name: eth0
+
+ipv4_route_table: 128
+ipv4_address: "{{ ansible_eth0.ipv4.address }}"
+ipv4_gateway: "{{ ipv4_subnet | ansible.utils.nthhost(1) }}"
+ipv4_subnet: "{{ (ansible_eth0.ipv4.network ~ '/' ~ ansible_eth0.ipv4.netmask) | ansible.utils.ipaddr('net') }}"
+
+vlan_conn_name: VLAN10
+vlan_mac: 12:34:56:78:9a:bc

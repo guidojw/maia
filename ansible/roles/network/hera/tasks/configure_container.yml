@@ -1,0 +1,41 @@
+---
+- name: Create directory /var/lib/machines
+  file:
+    path: /var/lib/machines
+    state: directory
+  register: machine_directory
+
+- name: Link container to {{ machine_directory.path }}/debian-custom
+  file:
+    src: "{{ data_directory.path }}/debian-custom"
+    dest: "{{ machine_directory.path }}/debian-custom"
+    state: link
+
+- name: Create directory /etc/systemd/nspawn
+  file:
+    path: /etc/systemd/nspawn
+    state: directory
+  register: service_directory
+
+- name: Create file debian-custom.nspawn
+  copy:
+    dest: "{{ service_directory.path }}/debian-custom.nspawn"
+    content: |-
+      [Exec]
+      Boot=on
+      Capability=all
+      ResolvConf=off
+
+      [Network]
+      Private=off
+      VirtualEthernet=off
+
+- name: Start container
+  when: not running
+  command: >-
+    machinectl start debian-custom
+
+- name: Enable container
+  when: not running
+  command: >-
+    machinectl enable debian-custom

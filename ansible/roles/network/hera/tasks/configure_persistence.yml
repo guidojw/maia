@@ -1,0 +1,61 @@
+---
+- name: Create directory /data/on_boot.d
+  file:
+    path: /data/on_boot.d
+    state: directory
+  register: on_boot_directory
+
+- name: Download script 0-setup-system.sh
+  get_url:
+    dest: "{{ on_boot_directory.path }}"
+    url: https://raw.githubusercontent.com/peacey/unifios-utilities/nspawn/nspawn-container/scripts/0-setup-system.sh
+  register: download
+
+- name: Make script executable
+  file:
+    path: "{{ download.dest }}"
+    mode: +x
+
+- name: Create directory /data/custom/dpkg
+  file:
+    path: /data/custom/dpkg
+    state: directory
+  register: dpkg_directory
+
+- name: Download dpkg files to {{ dpkg_directory.path }}
+  command:
+    chdir: "{{ dpkg_directory.path }}"
+    cmd: >-
+      apt download {{ item }}
+    creates: "{{ item }}_*.deb"
+  with_items:
+    - systemd-container
+    - libnss-mymachines
+    - debootstrap
+    - arch-test
+
+# Not using udm-boot so doing it the systemd way instead.
+- name: Create service file setup-system.service
+  copy:
+    dest: /etc/systemd/system/setup-system.service
+    content: |-
+      [Unit]
+      Description=Setup custom container service
+      Wants=network-online.target
+      After=network-online.target
+      StartLimitBurst=5
+
+      [Service]
+      Type=oneshot
+      ExecStart=/data/on_boot.d/0-setup-system.sh
+      RemainAfterExit=yes
+      RestartSec=30
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Start and enable service
+  systemd_service:
+    enabled: true
+    name: setup-system
+    state: started
