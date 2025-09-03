@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:questing-20250830@sha256:a61c057b4f69200ecf031519a20db79b8683837ba1dc2a59458d333eb75b174d
 
 # Install wget & gnupg2 & curl
 RUN apt-get update && apt-get install -y wget gnupg2 curl
