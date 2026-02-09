@@ -32,10 +32,8 @@ jobs:
           while IFS= read -r URL; do
             echo '::add-mask::'"$URL"
           done < <(echo "$TRAEFIK_URLS" | jq -r '.[]')
-          echo '::add-mask::'"$PIHOLE_IPV6"
         env:
           TRAEFIK_URLS: ${{ secrets.TRAEFIK_URLS }}
-          PIHOLE_IPV6: ${{ secrets.PIHOLE_IPV6 }}
 
       - name: Get custom CNAME entries
         id: get_custom_cname_entries
@@ -70,8 +68,10 @@ jobs:
             -f pihole/values.yaml \
             --set "pihole.serviceDns.loadBalancerIPv6=$PIHOLE_IPV6" \
             --set "pihole.dnsmasq.customCnameEntries={$CUSTOM_CNAME_ENTRIES}" \
+            --set "pihole.ftl.webserver_api_app_pwhash=$PIHOLE_APP_PASSWORD_HASH" \
             --set "pihole.ingressHost=$INGRESS_HOST"
         env:
           PIHOLE_IPV6: ${{ secrets.PIHOLE_IPV6 }}
           CUSTOM_CNAME_ENTRIES: ${{ steps.get_custom_cname_entries.outputs.custom_cname_entries }}
+          PIHOLE_APP_PASSWORD_HASH: ${{ secrets.PIHOLE_APP_PASSWORD_HASH }}
           INGRESS_HOST: ${{ steps.get_host.outputs.ingress_host }}

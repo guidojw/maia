@@ -155,6 +155,7 @@ pihole:
     dns_listeningMode: single
     dns_interface: eth0
     dns_revServers: true,192.168.1.0/24,192.168.1.1
+    webserver_api_app_pwhash:
 
   # -- any extra volumes you might want
   extraVolumes:
