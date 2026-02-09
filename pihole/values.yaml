@@ -276,3 +276,19 @@ pihole:
       name: config
     - mountPath: /regexlist
       name: regexlist
+    # https://github.com/MoJo2600/pihole-kubernetes/blob/pihole-2.31.0/charts/pihole/templates/deployment.yaml
+    - mountPath: /etc/dnsmasq.d/02-custom.conf
+      name: custom-dnsmasq
+      subPath: 02-custom.conf
+    - mountPath: /etc/addn-hosts
+      name: custom-dnsmasq
+      subPath: addn-hosts
+    - mountPath: /etc/dnsmasq.d/05-pihole-custom-cname.conf
+      name: custom-dnsmasq
+      subPath: 05-pihole-custom-cname.conf
+    - mountPath: /etc/pihole/adlists.list
+      name: adlists
+      subPath: adlists.list
+    - mountPath: /etc/pihole/whitelist.txt
+      name: whitelist
+      subPath: whitelist.txt
