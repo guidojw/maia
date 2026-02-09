@@ -35,18 +35,6 @@ pihole:
       # -- Generate a service for HTTPS traffic
       enabled: false
 
-  # -- Probes configuration
-  probes:
-    # -- probes.liveness -- Configure the healthcheck for the ingress controller
-    liveness:
-      # -- Generate a liveness probe
-      # -- threshold until the probe is considered failing
-      failureThreshold: 20
-    readiness:
-      # -- Generate a readiness probe
-      # -- defines the failure threshold for the readiness probe
-      failureThreshold: 20
-
   # -- Use an existing secret for the admin password.
   admin:
     # -- Specify an existing secret to use as admin password
@@ -150,13 +138,10 @@ pihole:
   - www.googleadservices.com
   - fonts.gstatic.com
   - eu.docusign.net
-  # - (\.|^)openvpn\.net$
-  # - (\.|^)openvpn\.com$
   - fntech.com
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
   - api.loganalytics.azure.com
-  # - static.datadoghq.com
 
   # -- values that should be added to pihole-FTL.conf. You can use either scalars or project cm, secrets or pod fields via valueFrom
   ftl:
@@ -219,7 +204,9 @@ pihole:
       name: pihole-regexlist
     data:
       regexlist.list: |
-        (\.|^)datadoghq.com$
+        (\.|^)datadoghq\.com$
+        (\.|^)openvpn\.com$
+        (\.|^)openvpn\.net$
 
   - apiVersion: cert-manager.io/v1
     kind: Certificate
