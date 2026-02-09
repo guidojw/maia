@@ -3,6 +3,9 @@ pihole:
   # This is a YAML-formatted file.
   # Declare variables to be passed into your templates.
 
+  # -- The maximum number of Pods that can be unavailable during updating
+  maxUnavailable: 0
+
   dualStack:
     # -- set this to true to enable creation of DualStack services or creation of separate IPv6 services if `serviceDns.type` is set to `"LoadBalancer"`
     enabled: true
@@ -135,13 +138,10 @@ pihole:
   - www.googleadservices.com
   - fonts.gstatic.com
   - eu.docusign.net
-  # - (\.|^)openvpn\.net$
-  # - (\.|^)openvpn\.com$
   - fntech.com
   - api.loganalytics.io
   - rt.applicationinsights.microsoft.com
   - api.loganalytics.azure.com
-  - (\.|^)datadoghq.com
 
   # -- values that should be added to pihole-FTL.conf. You can use either scalars or project cm, secrets or pod fields via valueFrom
   ftl:
@@ -155,6 +155,16 @@ pihole:
     dns_listeningMode: single
     dns_interface: eth0
     dns_revServers: true,192.168.1.0/24,192.168.1.1
+
+  # -- any extra volumes you might want
+  extraVolumes:
+    # external-conf:
+    #   configMap:
+    #     name: pi-hole-lighttpd-external-conf
+    regexlist:
+      configMap:
+        defaultMode: 420
+        name: pihole-regexlist
 
   # -- any extra kubernetes manifests you might want
   extraObjects:
@@ -188,6 +198,16 @@ pihole:
   #           url.redirect = (".*" => "https://%0$0")
   #         }
   #       }
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: pihole-regexlist
+    data:
+      regexlist.list: |
+        (\.|^)datadoghq\.com$
+        (\.|^)openvpn\.com$
+        (\.|^)openvpn\.net$
+
   - apiVersion: cert-manager.io/v1
     kind: Certificate
     metadata:
@@ -216,3 +236,46 @@ pihole:
           port: 80
       tls:
         secretName: pihole-cert
+
+  # -- any initContainers you might want to run before starting pihole
+  extraInitContainers:
+  # - name: copy-config
+  #   image: busybox
+  #   args:
+  #     - sh
+  #     - -c
+  #     - |
+  #       cp /etc/lighttpd-cm/external.conf /etc/lighttpd/
+  #       ls -l /etc/lighttpd/
+  #   volumeMounts:
+  #     - name: external-conf-cm
+  #       mountPath: /etc/lighttpd-cm/
+  #     - name: external-conf
+  #       mountPath: /etc/lighttpd/
+  - name: add-regexlist
+    image: pihole/pihole:2025.07.1@sha256:f84c1654bfbafc44e2ac8447a1fa2fb739eae66395b4c179d2c59cb93e1321f3
+    command:
+    - sh
+    - -c
+    - sudo pihole -g && cp /etc/pihole/gravity.db /target/ && cat /regexlist/regexlist.list | xargs -I{} sudo pihole-FTL sqlite3 /target/gravity.db "INSERT OR IGNORE INTO domainlist (type, domain, enabled) VALUES (2, '{}', 1);"
+    volumeMounts:
+    - mountPath: /target
+      name: config
+    - mountPath: /regexlist
+      name: regexlist
+    # https://github.com/MoJo2600/pihole-kubernetes/blob/pihole-2.31.0/charts/pihole/templates/deployment.yaml
+    - mountPath: /etc/dnsmasq.d/02-custom.conf
+      name: custom-dnsmasq
+      subPath: 02-custom.conf
+    - mountPath: /etc/addn-hosts
+      name: custom-dnsmasq
+      subPath: addn-hosts
+    - mountPath: /etc/dnsmasq.d/05-pihole-custom-cname.conf
+      name: custom-dnsmasq
+      subPath: 05-pihole-custom-cname.conf
+    - mountPath: /etc/pihole/adlists.list
+      name: adlists
+      subPath: adlists.list
+    - mountPath: /etc/pihole/whitelist.txt
+      name: whitelist
+      subPath: whitelist.txt
