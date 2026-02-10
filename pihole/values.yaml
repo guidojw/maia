@@ -43,7 +43,7 @@ pihole:
   # -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom
   extraEnvVars:
     # issue 360
-    # FTLCONF_dns_listeningMode: 'all'
+    FTLCONF_dns_listeningMode: single
     # TZ: UTC
     # Project a variable
     # SOME_VAR:
@@ -152,7 +152,6 @@ pihole:
     #   valueFrom:
     #     fieldRef:
     #       fieldPath: status.podIP
-    dns_listeningMode: single
     dns_interface: eth0
     dns_revServers: true,192.168.0.0/16,192.168.30.1
 
