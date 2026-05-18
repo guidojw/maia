@@ -77,6 +77,7 @@ traefik:
         # Local
         - 192.168.1.0/24
         - 172.23.0.0/16
+        - 10.42.0.0/16
         # Cloudflare
         - 173.245.48.0/20
         - 103.21.244.0/22
@@ -171,7 +172,7 @@ traefik:
     metadata:
       name: legacy-traefik
     spec:
-      externalName: 192.168.1.55
+      externalName: 192.168.1.20
       type: ExternalName
       ports:
       - port: 443
