@@ -75,7 +75,6 @@ traefik:
           # -- Trust forwarded headers information (X-Forwarded-*).
         trustedIPs:
         # Local
-        - 192.168.1.0/24
         - 10.42.0.0/16
 
   service:
