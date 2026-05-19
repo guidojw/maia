@@ -1,0 +1,10 @@
+---
+- name: Create VLAN connection
+  nmcli:
+    conn_name: "{{ vlan_conn_name }}"
+    mac: "{{ vlan_mac }}"
+    type: vlan
+    vlandev: enp4s0
+    vlanid: 10
+    state: present
+  notify: up connection

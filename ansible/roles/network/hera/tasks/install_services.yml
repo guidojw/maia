@@ -1,0 +1,56 @@
+---
+- name: Stop container
+  command: >-
+    machinectl stop debian-custom
+
+- name: Wait for container to be stopped
+  command: >-
+    machinectl list
+  register: leftover_machines
+  until: not leftover_machines.stdout | regex_search(regex)
+  retries: 5
+  delay: 10
+  vars:
+    regex: '\ndebian-custom\s+container\s+systemd-nspawn\s+debian\s+'
+
+- name: Install frrouting in container
+  command: >-
+    systemd-nspawn
+      -M debian-custom
+      -D {{ data_directory.path }}/debian-custom
+      /bin/bash -c '
+      set -e;
+      apt install -y curl lsb-release;
+      curl -s https://deb.frrouting.org/frr/keys.gpg | tee /usr/share/keyrings/frrouting.gpg > /dev/null;
+      FRRVER="frr-stable";
+      echo deb [signed-by=/usr/share/keyrings/frrouting.gpg] https://deb.frrouting.org/frr $(lsb_release -s -c) $FRRVER | tee -a /etc/apt/sources.list.d/frr.list;
+      apt update && apt install -y frr frr-pythontools
+      '
+
+- name: Copy file bgpd.conf
+  template:
+    dest: /data/custom
+    src: bgpd.conf.j2
+  vars:
+    hostname: hera
+  register: bgpd_conf
+
+- name: Append file binding to nspawn file
+  blockinfile:
+    block: |-
+
+      [Files]
+      BindReadOnly={{ bgpd_conf.dest }}:/etc/frr/bgpd.conf
+    path: "{{ service_directory.path }}/debian-custom.nspawn"
+    state: present
+
+- name: Turn on frrouting bgpd in container
+  command: >-
+    systemd-nspawn
+      -M debian-custom
+      -D {{ data_directory.path }}/debian-custom
+      /bin/bash -c 'sed -i "s|bgpd=no|bgpd=yes|g" /etc/frr/daemons'
+
+- name: Start container
+  command: >-
+    machinectl start debian-custom
