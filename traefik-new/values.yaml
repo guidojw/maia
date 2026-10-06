@@ -73,13 +73,36 @@ traefik:
           # -- Trust forwarded headers information (X-Forwarded-*).
         trustedIPs:
         # Local
-        - 10.52.0.0/16
         - 192.168.1.0/24
+        - 172.23.0.0/16
+        # Cloudflare
+        - 173.245.48.0/20
+        - 103.21.244.0/22
+        - 103.22.200.0/22
+        - 103.31.4.0/22
+        - 141.101.64.0/18
+        - 108.162.192.0/18
+        - 190.93.240.0/20
+        - 188.114.96.0/20
+        - 197.234.240.0/22
+        - 198.41.128.0/17
+        - 162.158.0.0/15
+        - 104.16.0.0/13
+        - 104.24.0.0/14
+        - 172.64.0.0/13
+        - 131.0.72.0/22
+        - 2400:cb00::/32
+        - 2606:4700::/32
+        - 2803:f800::/32
+        - 2405:b500::/32
+        - 2405:8100::/32
+        - 2a06:98c0::/29
+        - 2c0f:f248::/32
 
   service:
     # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
     annotations:
-      io.cilium/lb-ipam-ips: 192.168.31.2
+      io.cilium/lb-ipam-ips: 192.168.102.2
 
   #
   # -- Extra objects to deploy (value evaluated as a template)
@@ -95,21 +118,6 @@ traefik:
       secretName: traefik-cert
       dnsNames:
       - "{{ .Values.ingressHost }}"
-      issuerRef:
-        name: letsencrypt-production
-        kind: ClusterIssuer
-
-  - |
-    apiVersion: cert-manager.io/v1
-    kind: Certificate
-    metadata:
-      name: legacy-cert
-    spec:
-      secretName: legacy-cert
-      dnsNames:
-      {{- range .Values.legacyUrls }}
-      - {{ . }}
-      {{- end }}
       issuerRef:
         name: letsencrypt-production
         kind: ClusterIssuer
@@ -144,12 +152,37 @@ traefik:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: legacy-traefik
+      name: legacy-traefik-https
     spec:
-      externalName: 192.168.1.20
+      externalName: 192.168.31.2
       type: ExternalName
       ports:
       - port: 443
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: legacy-traefik-http
+    spec:
+      externalName: 192.168.31.2
+      type: ExternalName
+      ports:
+      - port: 80
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: legacy-acme-forward
+    spec:
+      entryPoints:
+      - web
+      routes:
+      - kind: Rule
+        match: "({{ include \"traefik.httpRouterRule\" .Values.legacyUrls }}) && PathPrefix(`/.well-known/acme-challenge/`)"
+        priority: 1000
+        services:
+        - name: legacy-traefik-http
+          port:  80
 
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRouteTCP
@@ -157,23 +190,15 @@ traefik:
       name: legacy-router
     spec:
       entryPoints:
-      - web
+      # - web
       - websecure
       routes:
       - match: "{{ include \"traefik.tcpRouterRule\" .Values.legacyUrls }}"
         services:
-        - name: legacy-traefik
+        - name: legacy-traefik-https
           port: 443
       tls:
         passthrough: true
-
-  - apiVersion: traefik.io/v1alpha1
-    kind: TLSStore
-    metadata:
-      name: default
-    spec:
-      certificates:
-      - secretName: legacy-cert
 
   - apiVersion: traefik.io/v1alpha1
     kind: TLSOption
