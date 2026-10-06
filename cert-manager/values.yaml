@@ -22,7 +22,6 @@ cert-manager:
       name: letsencrypt-staging
     spec:
       acme:
-        email: {{ .Values.acmeEmail }}
         server: https://acme-staging-v02.api.letsencrypt.org/directory
         privateKeySecretRef:
           name: letsencrypt-issuer-account-key
@@ -38,7 +37,6 @@ cert-manager:
       name: letsencrypt-production
     spec:
       acme:
-        email: {{ .Values.acmeEmail }}
         server: https://acme-v02.api.letsencrypt.org/directory
         privateKeySecretRef:
           name: letsencrypt-issuer-account-key
