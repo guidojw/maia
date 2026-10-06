@@ -1,0 +1,18 @@
+---
+- name: Deploy Proxmox Cloud Controller Manager Helm chart
+  kubernetes.core.helm:
+    name: proxmox-cloud-controller-manager
+    chart_ref: oci://ghcr.io/sergelogvinov/charts/proxmox-cloud-controller-manager
+    release_namespace: kube-system
+    values:
+      config:
+        clusters:
+          - url: https://{{ proxmox_node_ip_address }}:8006/api2/json
+            insecure: true
+            token_id: "{{ proxmox_user }}@pve!ccm"
+            token_secret: "{{ proxmox_secret }}"
+            region: "{{ proxmox_cluster }}"
+  # randomly fails with "Failure when executing Helm command. Exited 1.\nstdout:
+  # \nstderr: Error: unknown flag: --all\n"
+  retries: 1
+  delay: 5

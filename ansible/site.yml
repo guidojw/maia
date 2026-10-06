@@ -1,0 +1,15 @@
+---
+- name: Set up network
+  hosts: maia
+  become: true
+  roles:
+    - role: network
+
+- name: Run k3s-ansible playbook
+  become: true
+  import_playbook: collections/ansible_collections/techno_tim/k3s_ansible/site.yml
+
+- name: Configure k3s cluster
+  hosts: maia
+  roles:
+    - role: k3s_post

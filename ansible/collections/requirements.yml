@@ -1,0 +1,6 @@
+---
+collections:
+  - name: kubernetes.core
+  - name: https://github.com/guidojw/k3s-ansible.git
+    type: git
+    version: feat/progress

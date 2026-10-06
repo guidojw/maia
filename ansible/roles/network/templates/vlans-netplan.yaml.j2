@@ -1,0 +1,35 @@
+# Managed by Ansible - do not edit manually
+network:
+  version: 2
+  vlans:
+{% for vlan in vlans %}
+    {{ parent_interface }}.{{ vlan.id }}:
+      id: {{ vlan.id }}
+      link: {{ parent_interface }}
+      dhcp4: true
+{% if vlan.routes is defined %}
+      routes:
+{% for route in vlan.routes %}
+        - to: {{ route.to }}
+          via: {{ route.via }}
+{% if route.table is defined %}
+          table: {{ route.table }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if vlan.routing_policy is defined %}
+      routing-policy:
+{% for routing_policy in vlan.routing_policy %}
+        - table: {{ routing_policy.table }}
+{% if routing_policy.from is defined %}
+          from: {{ routing_policy.from }}
+{% endif %}
+{% if routing_policy.to is defined %}
+          to: {{ routing_policy.to }}
+{% endif %}
+{% if routing_policy.priority is defined %}
+          priority: {{ routing_policy.priority }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}

@@ -2,6 +2,10 @@
 *.key
 *.crt
 
+ansible.cfg
+ansible/collections/*
+!ansible/collections/requirements.yml
+
 **/charts/*.tgz
 
 .idea
