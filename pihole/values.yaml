@@ -19,7 +19,7 @@ pihole:
     type: LoadBalancer
 
     # -- A fixed `spec.loadBalancerIP` for the DNS Service
-    loadBalancerIP: 192.168.31.25
+    loadBalancerIP: 192.168.102.25
     # -- A fixed `spec.loadBalancerIP` for the IPv6 DNS Service
     loadBalancerIPv6:
 
@@ -64,7 +64,7 @@ pihole:
     additionalHostsEntries:
     # - 192.168.0.3     host4
     # - 192.168.0.4     host5
-    - 192.168.31.2     pandora.lan
+    - 192.168.102.2     pandora.lan
 
     # -- Here we specify custom cname entries that should point to `A` records or
     # elements in customDnsEntries array.
@@ -253,7 +253,7 @@ pihole:
   #     - name: external-conf
   #       mountPath: /etc/lighttpd/
   - name: add-regexlist
-    image: pihole/pihole:2025.07.1@sha256:f84c1654bfbafc44e2ac8447a1fa2fb739eae66395b4c179d2c59cb93e1321f3
+    image: pihole/pihole:2026.07.2@sha256:f7d1be836e3bc608b56d82fc9904f5a831cdfbc0dc9c6d58f94e4c985c70038b
     command:
     - sh
     - -c
