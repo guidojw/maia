@@ -2,6 +2,8 @@
 *.key
 *.crt
 
+ansible.cfg
+
 **/charts/*.tgz
 
 .idea

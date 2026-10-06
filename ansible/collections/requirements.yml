@@ -1,0 +1,7 @@
+---
+roles:
+  - mrlesmithjr.netplan
+
+collections:
+  - ansible.utils
+  - community.general
