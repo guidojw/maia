@@ -1,0 +1,8 @@
+proxmox_cluster: "cluster"
+
+proxmox_node_ip_address: "ip_address"
+
+proxmox_user: "user"
+proxmox_secret: "secret"
+proxmox_csi_user: "user"
+proxmox_csi_secret: "secret"

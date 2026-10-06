@@ -1,0 +1,76 @@
+---
+- name: Install Python
+  become: true
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+
+- name: Install Python libraries
+  ansible.builtin.pip:
+    name:
+      - kubernetes
+      - PyYAML
+      - jsonpatch
+    virtualenv: "{{ ansible_env.HOME }}/ansible/venv"
+    virtualenv_command: python3 -m venv
+  register: venv
+
+- name: Create namespace csi-proxmox
+  kubernetes.core.k8s:
+    name: csi-proxmox
+    api_version: v1
+    kind: Namespace
+    state: present
+  vars:
+    ansible_python_interpreter: "{{ venv.virtualenv }}/bin/python"
+
+- name: Add pod-security label to namespace csi-proxmox
+  kubernetes.core.k8s:
+    state: patched
+    kind: Namespace
+    name: csi-proxmox
+    definition:
+      metadata:
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+  vars:
+    ansible_python_interpreter: "{{ venv.virtualenv }}/bin/python"
+
+- name: Deploy Proxmox CSI Plugin Helm chart
+  kubernetes.core.helm:
+    name: proxmox-csi-plugin
+    chart_ref: oci://ghcr.io/sergelogvinov/charts/proxmox-csi-plugin
+    release_namespace: csi-proxmox
+    values:
+      config:
+        clusters:
+          - url: https://{{ proxmox_node_ip_address }}:8006/api2/json
+            insecure: true
+            token_id: "{{ proxmox_csi_user }}@pve!csi"
+            token_secret: "{{ proxmox_csi_secret }}"
+            region: "{{ proxmox_cluster }}"
+      storageClass:
+        - name: ssd
+          annotations:
+            storageclass.kubernetes.io/is-default-class: "true"
+          storage: ssd
+          ssd: true
+        - name: ssd-retain
+          storage: ssd
+          ssd: true
+          reclaimPolicy: Retain
+        - name: bulk
+          storage: bulk
+          extraParameters:
+            discard: "on"
+        - name: bulk-retain
+          storage: bulk
+          extraParameters:
+            discard: "on"
+          reclaimPolicy: Retain
+  # randomly fails with "Failure when executing Helm command. Exited 1.\nstdout:
+  # \nstderr: Error: unknown flag: --all\n"
+  retries: 1
+  delay: 5

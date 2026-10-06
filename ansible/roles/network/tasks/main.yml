@@ -1,0 +1,15 @@
+---
+- name: Modify netplan cloud-init configuration file permissions
+  ansible.builtin.file:
+    path: /etc/netplan/50-cloud-init.yaml
+    mode: "0600"
+  notify: Apply netplan
+
+- name: Deploy netplan VLAN configuration
+  ansible.builtin.template:
+    src: templates/vlans-netplan.yaml.j2
+    dest: /etc/netplan/60-vlans.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Apply netplan
