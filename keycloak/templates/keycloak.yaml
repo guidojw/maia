@@ -1,0 +1,31 @@
+{{- if .Values.hooks.keycloakCreate.enabled -}}
+apiVersion: k8s.keycloak.org/v2beta1
+kind: Keycloak
+metadata:
+  name: keycloak
+spec:
+  instances: 1
+
+  db:
+    vendor: postgres
+    host: postgres-cnpg-rw.keycloak.svc.cluster.local
+    usernameSecret:
+      name: postgres-cnpg-app
+      key: username
+    passwordSecret:
+      name: postgres-cnpg-app
+      key: password
+
+  http:
+    httpEnabled: true
+
+  hostname:
+    hostname: "{{ .Values.ingressHost }}"
+
+  proxy:
+    headers: xforwarded
+
+  additionalOptions:
+    - name: db-url
+      value: "jdbc:postgresql://postgres-cnpg-rw.keycloak.svc.cluster.local:5432/keycloak_db?sslmode=disable"
+{{- end -}}
