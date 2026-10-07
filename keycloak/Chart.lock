@@ -1,0 +1,6 @@
+dependencies:
+- name: keycloak-operator-helm
+  repository: oci://quay.io/keycloak
+  version: 26.8.0
+digest: sha256:ac8d3a34b8e7921f81e8813c163dd5ac1cd076346636b120d59a5fea8a2a9df4
+generated: "2026-10-06T23:07:15.003149887+02:00"

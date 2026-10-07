@@ -1,0 +1,20 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: keycloak-ingress
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+    - match: Host(`{{ .Values.ingressHost }}`)
+      kind: Rule
+      services:
+      - name: keycloak-service
+        port: 8080
+        scheme: http
+      middlewares:
+      - name: keycloak-https-headers
+        namespace: keycloak
+  tls:
+    secretName: keycloak-cert
