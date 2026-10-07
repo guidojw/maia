@@ -1,7 +1,7 @@
 # cloudnative-pg
 
-Install the chart with:
+Install/upgrade with:
 
 ```sh
-helm install cnpg ./cloudnative-pg -n cnpg-system
+helm upgrade --install --debug --atomic -n <namespace> cnpg ./cloudnative-pg
 ```
