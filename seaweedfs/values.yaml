@@ -1,0 +1,147 @@
+# Default values for seaweedfs.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+seaweedfs:
+  global:
+    # All app-specific global values are namespaced under global.seaweedfs
+    # to avoid polluting the shared global namespace when used as a subchart.
+    seaweedfs:
+      image:
+        # chrislusf/seaweedfs-enterprise for the enterprise edition
+        name: chrislusf/seaweedfs-enterprise
+        tag: 4.48_large_disk_full
+      enableSecurity: true
+
+  volume:
+    enabled: false
+
+  # Map of named volume groups for topology-aware deployments.
+  # Each key inherits all fields from the `volume` section but can override
+  # them locally—for example, replicas, nodeSelector, dataCenter, etc.
+  # To switch entirely to this scheme, set `volume.enabled: false`
+  # and define one entry per zone/data-center under `volumes`.
+  #
+  #
+  # volumes:
+  #   dc1:
+  #     replicas: 2
+  #     dataCenter: "dc1"
+  #     nodeSelector: |
+  #      topology.kubernetes.io/zone: dc1
+  #   dc2:
+  #     replicas: 2
+  #     dataCenter: "dc2"
+  #     nodeSelector: |
+  #      topology.kubernetes.io/zone: dc2
+  #   dc3:
+  #     replicas: 2
+  #     dataCenter: "dc3"
+  #     nodeSelector: |
+  #      topology.kubernetes.io/zone: dc3
+  #
+  volumes:
+    ssd:
+      dataDirs:
+      - name: data
+        type: persistentVolumeClaim
+        size: 50Gi
+        storageClass: ssd-retain
+        maxVolumes: 0
+      extraArgs:
+      - -disk=ssd
+    bulk:
+      dataDirs:
+      - name: data
+        type: persistentVolumeClaim
+        size: 50Gi
+        storageClass: bulk-retain
+        maxVolumes: 0
+      extraArgs:
+      - -disk=hdd
+
+  filer:
+    # extraEnvVars is a list of extra environment variables to set with the stateful set.
+    extraEnvironmentVars:
+      WEED_LEVELDB2_ENABLED: "false"
+      WEED_POSTGRES_ENABLED: "true"
+      WEED_POSTGRES_HOSTNAME: postgres-cnpg-rw.seaweedfs.svc.cluster.local
+      WEED_POSTGRES_DATABASE: seaweedfs
+      WEED_POSTGRES_USERNAME: seaweed
+
+    # secret env variables
+    secretExtraEnvironmentVars:
+      # WEED_POSTGRES_USERNAME:
+      #   secretKeyRef:
+      #     name: postgres-credentials
+      #     key: username
+      # WEED_POSTGRES_PASSWORD:
+      #   secretKeyRef:
+      #     name: postgres-credentials
+      #     key: password
+      WEED_POSTGRES_PASSWORD:
+        secretKeyRef:
+          name: postgres-cnpg-app
+          key: password
+
+  s3:
+    enabled: true
+    port: 8333
+    # enable user & permission to s3 (need to inject to all services)
+    enableAuth: true
+    extraEnvironmentVars:
+      WEED_S3_IAM_ENABLED: "true"
+      WEED_S3_ADMIN_SERVER: seaweedfs-admin.seaweedfs.svc.cluster.local:23646
+
+    # Custom command line arguments to add to the s3 command
+    # Default idleTimeout is 120 seconds. Example to customize:
+    # extraArgs: ["-idleTimeout=300"]
+    extraArgs:
+    - -filer=seaweedfs-filer.seaweedfs.svc.cluster.local:8888
+    - -iam.readOnly=false
+
+  admin:
+    enabled: true
+
+    # Admin authentication
+    secret:
+      # Name of an existing secret containing admin credentials. If set, adminUser and adminPassword below are ignored.
+      existingSecret: seaweedfs-admin-credentials
+      # Key in the existing secret for the admin username. Required if existingSecret is set.
+      userKey: adminUser
+      # Key in the existing secret for the admin password. Required if existingSecret is set.
+      pwKey: adminPassword
+      adminPassword: bypass-validation-loop  # If empty, authentication is disabled.
+
+    extraEnvironmentVars:
+      WEED_ADMIN_OIDC_ENABLED: "true"
+      WEED_ADMIN_OIDC_ISSUER: https://{{ .Values.keycloakUrl }}/realms/homelab
+      WEED_ADMIN_OIDC_CLIENT_ID: seaweedfs-admin
+      WEED_ADMIN_OIDC_REDIRECT_URL: https://{{ .Values.ingressHost }}/login/oidc/callback
+      WEED_ADMIN_OIDC_SCOPES: openid,profile,email
+      WEED_ADMIN_OIDC_DEFAULT_ROLE: readonly
+      WEED_ADMIN_OIDC_ADMIN_GROUPS: storage-admins
+
+    # secret env variables (e.g. for injecting OIDC client secret from a Kubernetes Secret)
+    secretExtraEnvironmentVars:
+      # WEED_ADMIN_OIDC_CLIENT_SECRET:
+      #   secretKeyRef:
+      #     name: seaweedfs-admin-oidc
+      #     key: client_secret
+      WEED_ADMIN_OIDC_CLIENT_SECRET:
+        secretKeyRef:
+          name: seaweedfs-keycloak-secret
+          key: client-secret
+
+# The mover selects whole volumes with no writes during quietFor; it does not
+# track per-object read/access times.
+tiering:
+  enabled: true
+  schedule: "0 2 * * *"
+  pathPrefix: /buckets/
+  hotDisk: ssd
+  coldDisk: hdd
+  quietFor: 744h
+  fullPercent: 0.001
+  excludeCollections:
+    - terraform-state

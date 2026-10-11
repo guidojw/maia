@@ -1,0 +1,23 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-cnpg
+spec:
+  instances: 1
+  storage:
+    storageClass: ssd-retain
+    size: 2Gi
+  bootstrap:
+    initdb:
+      database: seaweedfs
+      owner: seaweed
+      postInitApplicationSQL:
+      - |
+        CREATE TABLE IF NOT EXISTS filemeta (
+            dirhash BIGINT,
+            name VARCHAR(65535),
+            directory VARCHAR(65535),
+            meta bytea,
+            PRIMARY KEY (dirhash, name)
+        );
+      - ALTER TABLE filemeta OWNER TO seaweed;

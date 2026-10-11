@@ -8,6 +8,17 @@ ansible/collections/*
 
 **/charts/*.tgz
 
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+
+backend.conf*
+!backend.conf.example
+secrets.tfvars*
+!secrets.tfvars.example
+variables.tfvars*
+!variables.tfvars.example
+
 .idea
 
 password
