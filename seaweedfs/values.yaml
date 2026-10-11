@@ -111,7 +111,6 @@ seaweedfs:
       userKey: adminUser
       # Key in the existing secret for the admin password. Required if existingSecret is set.
       pwKey: adminPassword
-      adminPassword: bypass-validation-loop  # If empty, authentication is disabled.
 
     extraEnvironmentVars:
       WEED_ADMIN_OIDC_ENABLED: "true"
