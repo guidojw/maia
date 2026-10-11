@@ -30,3 +30,32 @@ resource "aws_iam_user_policy_attachment" "attach_admin" {
 resource "aws_s3_bucket" "terraform_state_bucket" {
   bucket = "terraform-state"
 }
+
+resource "aws_s3_bucket" "sharex" {
+  bucket = "sharex"
+}
+
+resource "aws_iam_user" "anonymous" {
+  name = "anonymous"
+}
+
+resource "aws_iam_policy" "anonymous_sharex_policy" {
+  name        = "SeaweedAnonymousShareXReadPolicy"
+  description = "Allows anonymous read access to objects in the ShareX bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.sharex.arn}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user_policy_attachment" "attach_anonymous_sharex" {
+  user       = aws_iam_user.anonymous.name
+  policy_arn = aws_iam_policy.anonymous_sharex_policy.arn
+}
