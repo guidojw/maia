@@ -21,5 +21,5 @@ kubectl get secret seaweedfs-s3-secret -n <namespace> -o json | jq -r '.data | "
 Install/upgrade with:
 
 ```sh
-helm upgrade --install --debug --atomic -f seaweedfs/values.yaml -n <namespace> seaweedfs ./seaweedfs --set=ingressHost=<url>
+helm upgrade --install --debug --atomic -n <namespace> -f seaweedfs/values.yaml --set seaweedfs.ingressHost=<url> --set seaweedfs.s3IngressHost=<url> --set seaweedfs.keycloakUrl=<url> seaweedfs seaweedfs
 ```
