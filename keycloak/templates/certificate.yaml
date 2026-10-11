@@ -5,7 +5,7 @@ metadata:
 spec:
   secretName: keycloak-cert
   dnsNames:
-  - "{{ .Values.ingressHost }}"
+  - "{{ .Values.keycloak.ingressHost }}"
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
