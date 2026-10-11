@@ -1,0 +1,14 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-cnpg
+spec:
+  instances: 1
+  storage:
+    storageClass: ssd-retain
+    size: 1Gi
+  bootstrap:
+    initdb:
+      database: keycloak_db
+      owner: keycloak_user
+
