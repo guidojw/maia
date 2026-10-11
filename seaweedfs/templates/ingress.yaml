@@ -7,7 +7,7 @@ spec:
   - web
   - websecure
   routes:
-    - match: Host(`{{ .Values.ingressHost }}`)
+    - match: Host(`{{ .Values.seaweedfs.ingressHost }}`)
       kind: Rule
       services:
       - name: seaweedfs-admin
@@ -23,7 +23,7 @@ spec:
   entryPoints:
   - websecure
   routes:
-    - match: Host(`{{ .Values.s3IngressHost }}`)
+    - match: Host(`{{ .Values.seaweedfs.s3IngressHost }}`)
       kind: Rule
       services:
       - name: seaweedfs-s3

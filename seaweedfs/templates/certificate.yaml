@@ -5,7 +5,7 @@ metadata:
 spec:
   secretName: seaweedfs-cert
   dnsNames:
-  - "{{ .Values.ingressHost }}"
+  - "{{ .Values.seaweedfs.ingressHost }}"
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
@@ -17,7 +17,7 @@ metadata:
 spec:
   secretName: s3-cert
   dnsNames:
-  - "{{ .Values.s3IngressHost }}"
+  - "{{ .Values.seaweedfs.s3IngressHost }}"
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
