@@ -1,0 +1,135 @@
+{{- if .Values.tiering.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-tier-placement
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+      - name: configure-placement
+        image: "{{ .Values.seaweedfs.global.seaweedfs.image.name }}:{{ .Values.seaweedfs.global.seaweedfs.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-ec"]
+        args:
+        - |
+          /usr/bin/weed shell -master={{ .Release.Name }}-master-0.{{ .Release.Name }}-master.{{ .Release.Namespace }}.svc.cluster.local:9333 -filer={{ .Release.Name }}-filer.{{ .Release.Namespace }}.svc.cluster.local:8888 <<'EOF'
+          fs.configure -locationPrefix={{ .Values.tiering.pathPrefix }} -disk={{ .Values.tiering.hotDisk }} -apply
+          EOF
+        volumeMounts:
+        - name: security-config
+          mountPath: /etc/seaweedfs/security.toml
+          subPath: security.toml
+          readOnly: true
+        - name: ca-cert
+          mountPath: /usr/local/share/ca-certificates/ca/
+          readOnly: true
+        - name: client-cert
+          mountPath: /usr/local/share/ca-certificates/client/
+          readOnly: true
+      volumes:
+      - name: security-config
+        configMap:
+          name: {{ .Release.Name }}-security-config
+      - name: ca-cert
+        secret:
+          secretName: {{ .Release.Name }}-ca-cert
+      - name: client-cert
+        secret:
+          secretName: {{ .Release.Name }}-client-cert
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-tier-move
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.tiering.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          containers:
+          - name: tier-move
+            image: "{{ .Values.seaweedfs.global.seaweedfs.image.name }}:{{ .Values.seaweedfs.global.seaweedfs.image.tag }}"
+            imagePullPolicy: IfNotPresent
+            command: ["/bin/sh", "-ec"]
+            args:
+            - |
+              weed_shell() {
+                /usr/bin/weed shell \
+                  -master={{ .Release.Name }}-master-0.{{ .Release.Name }}-master.{{ .Release.Namespace }}.svc.cluster.local:9333 \
+                  -filer={{ .Release.Name }}-filer.{{ .Release.Namespace }}.svc.cluster.local:8888 "$@"
+              }
+
+              weed_shell <<'EOF'
+              fs.configure -locationPrefix={{ .Values.tiering.pathPrefix }} -disk={{ .Values.tiering.hotDisk }} -apply
+              EOF
+
+              inventory=$(weed_shell <<'EOF'
+              volume.list -v=5
+              EOF
+              )
+
+              printf '%s\n' "$inventory" |
+                awk '/volume Id:/ {
+                  if (match($0, /Collection:[^,]*/)) {
+                    collection = substr($0, RSTART + 11, RLENGTH - 11)
+                    gsub(/^[[:space:]]+|[[:space:]]+$/, "", collection)
+                    if (collection == "") collection = "_default"
+                    print collection
+                  }
+                }' |
+                sort -u |
+                while IFS= read -r collection; do
+                  [ -n "$collection" ] || continue
+                  case "$collection" in
+              {{- range .Values.tiering.excludeCollections }}
+                    {{ . | quote }}) echo "Skipping excluded collection: $collection"; continue ;;
+              {{- end }}
+                  esac
+
+                  case "$collection" in
+                    *[!A-Za-z0-9._-]*) echo "Skipping collection with unsupported characters: $collection" >&2; continue ;;
+                  esac
+
+                  weed_shell <<EOF
+              volume.tier.move -fromDiskType={{ $.Values.tiering.hotDisk }} -toDiskType={{ $.Values.tiering.coldDisk }} -collectionPattern=$collection -quietFor={{ $.Values.tiering.quietFor }} -fullPercent={{ $.Values.tiering.fullPercent }} -force
+              EOF
+                done
+            volumeMounts:
+            - name: security-config
+              mountPath: /etc/seaweedfs/security.toml
+              subPath: security.toml
+              readOnly: true
+            - name: ca-cert
+              mountPath: /usr/local/share/ca-certificates/ca/
+              readOnly: true
+            - name: client-cert
+              mountPath: /usr/local/share/ca-certificates/client/
+              readOnly: true
+          volumes:
+          - name: security-config
+            configMap:
+              name: {{ .Release.Name }}-security-config
+          - name: ca-cert
+            secret:
+              secretName: {{ .Release.Name }}-ca-cert
+          - name: client-cert
+            secret:
+              secretName: {{ .Release.Name }}-client-cert
+{{- end }}

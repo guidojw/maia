@@ -1,0 +1,23 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: seaweedfs-cert
+spec:
+  secretName: seaweedfs-cert
+  dnsNames:
+  - "{{ .Values.seaweedfs.ingressHost }}"
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: s3-cert
+spec:
+  secretName: s3-cert
+  dnsNames:
+  - "{{ .Values.seaweedfs.s3IngressHost }}"
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer

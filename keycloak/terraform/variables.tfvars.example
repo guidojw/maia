@@ -1,0 +1,10 @@
+keycloak_url      = "<url>"
+keycloak_username = "<username>"
+keycloak_password = "<password>"
+
+smtp_host     = "<host>"
+smtp_from     = "<mail>"
+smtp_username = "<mail>"
+smtp_password = "<password>"
+
+keycloak_clients = []

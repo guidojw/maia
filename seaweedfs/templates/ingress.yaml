@@ -1,0 +1,32 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: seaweedfs-ingress
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+    - match: Host(`{{ .Values.seaweedfs.ingressHost }}`)
+      kind: Rule
+      services:
+      - name: seaweedfs-admin
+        port: 23646
+  tls:
+    secretName: seaweedfs-cert
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: s3-ingress
+spec:
+  entryPoints:
+  - websecure
+  routes:
+    - match: Host(`{{ .Values.seaweedfs.s3IngressHost }}`)
+      kind: Rule
+      services:
+      - name: seaweedfs-s3
+        port: 8333
+  tls:
+    secretName: s3-cert

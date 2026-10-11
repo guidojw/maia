@@ -1,0 +1,6 @@
+endpoints = {
+  s3 = "<url>"
+}
+
+access_key = "<key>"
+secret_key = "<key>"
