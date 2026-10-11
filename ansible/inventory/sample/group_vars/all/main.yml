@@ -6,3 +6,5 @@ proxmox_user: "user"
 proxmox_secret: "secret"
 proxmox_csi_user: "user"
 proxmox_csi_secret: "secret"
+
+vlan10_ipv6_gateway: "ip_address"
