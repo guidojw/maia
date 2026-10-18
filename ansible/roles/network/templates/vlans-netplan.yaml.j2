@@ -7,6 +7,9 @@ network:
       id: {{ vlan.id }}
       link: {{ parent_interface }}
       dhcp4: true
+      # Keep the parent interface's default route preferred, so egress is deterministic.
+      dhcp4-overrides:
+        route-metric: 200
 {% if vlan.routes is defined %}
       routes:
 {% for route in vlan.routes %}

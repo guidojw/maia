@@ -1,7 +1,6 @@
 parent_interface: eth0
 vlan1_ipv4_cidr: "{{ ansible_facts[parent_interface].ipv4.network }}/{{ ansible_facts[parent_interface].ipv4.prefix }}"
 vlan1_ipv6_cidr: "{% set ipv6 = ansible_facts[parent_interface].ipv6 | selectattr('scope', 'equalto', 'global') | first %}{{ (ipv6.address ~ '/' ~ ipv6.prefix) | ansible.utils.ipaddr('network/prefix') }}"
-vlan10_ipv6_cidr: "{{ (vlan10_ipv6_gateway ~ '/64') | ansible.utils.ipaddr('network/prefix') }}"
 vlans:
   - id: 10
     routes:
@@ -25,10 +24,6 @@ vlans:
         from: "{{ cilium_bgp_lb_ipv4_cidr }}"
         to: "{{ service_cidr.split(',') | first }}"
         priority: 100
-      - table: 254
-        from: "{{ cilium_bgp_lb_ipv4_cidr }}"
-        to: 192.168.30.0/24
-        priority: 100
       - table: 300
         from: "{{ cilium_bgp_lb_ipv4_cidr }}"
         priority: 101
@@ -43,10 +38,6 @@ vlans:
       - table: 254
         from: "{{ cilium_bgp_lb_ipv6_cidr }}"
         to: "{{ service_cidr.split(',') | last }}"
-        priority: 100
-      - table: 254
-        from: "{{ cilium_bgp_lb_ipv6_cidr }}"
-        to: "{{ vlan10_ipv6_cidr }}"
         priority: 100
       - table: 301
         from: "{{ cilium_bgp_lb_ipv6_cidr }}"
