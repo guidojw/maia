@@ -2,6 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-hooks:
-  keycloakCreate:
-    enabled: true
+keycloak:
+  # The JVM sizes its heap from the memory limit (70% by default), so the limit also caps the heap.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 768Mi
+
+  hooks:
+    keycloakCreate:
+      enabled: true
