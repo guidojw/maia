@@ -1,3 +1,9 @@
+global:
+  # Host of the Traefik dashboard certificate.
+  ingressHost: ""
+  # Hosts routed to the legacy Traefik.
+  legacyUrls: []
+
 traefik:
   # Default values for Traefik
   # This is a YAML-formatted file.
@@ -49,10 +55,10 @@ traefik:
       ingressClass: traefik # @schema type:[string, null]
 
   log:
-    general:
-      # By default, the level is set to INFO.
-      # -- Alternative logging levels are TRACE, DEBUG, INFO, WARN, ERROR, FATAL, and PANIC.
-      level: TRACE
+    # By default, the level is set to INFO.
+    # -- Alternative logging levels are TRACE, DEBUG, INFO, WARN, ERROR, FATAL, and PANIC.
+    # The access log that CrowdSec parses is independent of this level.
+    level: INFO
 
   accessLog:
     # -- To enable access logs
@@ -117,7 +123,7 @@ traefik:
     spec:
       secretName: traefik-cert
       dnsNames:
-      - "{{ .Values.ingressHost }}"
+      - "{{ .Values.global.ingressHost }}"
       issuerRef:
         name: letsencrypt-production
         kind: ClusterIssuer
@@ -178,7 +184,7 @@ traefik:
       - web
       routes:
       - kind: Rule
-        match: "({{ include \"traefik.httpRouterRule\" .Values.legacyUrls }}) && PathPrefix(`/.well-known/acme-challenge/`)"
+        match: "({{ include \"traefik.httpRouterRule\" .Values.global.legacyUrls }}) && PathPrefix(`/.well-known/acme-challenge/`)"
         priority: 1000
         services:
         - name: legacy-traefik-http
@@ -193,7 +199,7 @@ traefik:
       # - web
       - websecure
       routes:
-      - match: "{{ include \"traefik.tcpRouterRule\" .Values.legacyUrls }}"
+      - match: "{{ include \"traefik.tcpRouterRule\" .Values.global.legacyUrls }}"
         services:
         - name: legacy-traefik-https
           port: 443
