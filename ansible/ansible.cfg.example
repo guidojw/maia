@@ -2,3 +2,4 @@
 inventory = inventory/servers/hosts.ini  ; Adapt this to the path to your inventory file
 collections_paths = ./collections
 roles_path = ./roles
+interpreter_python = /usr/bin/python3
