@@ -15,15 +15,30 @@ vlans:
         from: "{{ apiserver_endpoint }}"
         to: "{{ vlan1_ipv4_cidr }}"
         priority: 100
+      # Keep replies to the cluster (pods, services, other nodes) off the router, 254 is the main table.
+      - table: 254
+        from: "{{ cilium_bgp_lb_ipv4_cidr }}"
+        to: "{{ cluster_cidr.split(',') | first }}"
+        priority: 100
+      - table: 254
+        from: "{{ cilium_bgp_lb_ipv4_cidr }}"
+        to: "{{ service_cidr.split(',') | first }}"
+        priority: 100
       - table: 300
         from: "{{ cilium_bgp_lb_ipv4_cidr }}"
-        to: "{{ vlan1_ipv4_cidr }}"
-        priority: 100
+        priority: 101
       - table: 301
         from: "{{ ansible_default_ipv6.address }}/128"
         to: "{{ vlan1_ipv6_cidr }}"
         priority: 100
+      - table: 254
+        from: "{{ cilium_bgp_lb_ipv6_cidr }}"
+        to: "{{ cluster_cidr.split(',') | last }}"
+        priority: 100
+      - table: 254
+        from: "{{ cilium_bgp_lb_ipv6_cidr }}"
+        to: "{{ service_cidr.split(',') | last }}"
+        priority: 100
       - table: 301
         from: "{{ cilium_bgp_lb_ipv6_cidr }}"
-        to: "{{ vlan1_ipv6_cidr }}"
-        priority: 100
+        priority: 101
