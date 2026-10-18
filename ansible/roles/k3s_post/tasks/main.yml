@@ -12,8 +12,32 @@
   args:
     creates: /usr/local/bin/helm
 
+- name: Install Python
+  become: true
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+
+- name: Install Python libraries
+  ansible.builtin.pip:
+    name:
+      - kubernetes
+      - PyYAML
+      - jsonpatch
+    virtualenv: "{{ ansible_env.HOME }}/ansible/venv"
+    virtualenv_command: python3 -m venv
+  register: venv
+
 - name: Install Proxmox Cloud Controller Manager
   include_tasks: install_proxmox_cloud_controller_manager.yml
 
 - name: Install Proxmox CSI Plugin
   include_tasks: install_proxmox_csi_plugin.yml
+
+- name: Harden kube-vip
+  include_tasks: harden_kube_vip.yml
+
+- name: Harden Cilium
+  include_tasks: harden_cilium.yml
