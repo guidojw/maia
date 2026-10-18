@@ -1,34 +1,6 @@
 ---
-- name: Install Helm
-  become: true
-  ansible.builtin.unarchive:
-    src: https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz
-    dest: /usr/local/bin
-    extra_opts: --strip-components=1
-    owner: root
-    group: root
-    mode: 0755
-    remote_src: true
-  args:
-    creates: /usr/local/bin/helm
-
-- name: Install Python
-  become: true
-  ansible.builtin.apt:
-    name:
-      - python3
-      - python3-pip
-      - python3-venv
-
-- name: Install Python libraries
-  ansible.builtin.pip:
-    name:
-      - kubernetes
-      - PyYAML
-      - jsonpatch
-    virtualenv: "{{ ansible_env.HOME }}/ansible/venv"
-    virtualenv_command: python3 -m venv
-  register: venv
+- name: Install dependencies
+  include_tasks: install_dependencies.yml
 
 - name: Install Proxmox Cloud Controller Manager
   include_tasks: install_proxmox_cloud_controller_manager.yml

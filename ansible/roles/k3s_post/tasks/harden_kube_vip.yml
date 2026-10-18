@@ -31,3 +31,10 @@
          else [{'name': 'vip_leaseduration', 'value': '60'},
                {'name': 'vip_renewdeadline', 'value': '40'},
                {'name': 'vip_retryperiod', 'value': '5'}] }}
+
+# The patch restarts kube-vip, and the kubeconfig points at the VIP.
+- name: Wait for the API server on the VIP
+  ansible.builtin.wait_for:
+    host: "{{ apiserver_endpoint }}"
+    port: 6443
+    timeout: 180
