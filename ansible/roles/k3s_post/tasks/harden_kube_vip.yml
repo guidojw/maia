@@ -1,0 +1,40 @@
+---
+# k3s only re-applies vip.yaml when its content changes, so this patch survives restarts and is redone after a template change.
+- name: Harden kube-vip DaemonSet
+  kubernetes.core.k8s:
+    state: patched
+    api_version: apps/v1
+    kind: DaemonSet
+    name: kube-vip-ds
+    namespace: kube-system
+    definition:
+      spec:
+        template:
+          spec:
+            priorityClassName: system-node-critical
+            containers:
+              - name: kube-vip
+                imagePullPolicy: IfNotPresent
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                  limits:
+                    memory: 256Mi
+                env: "{{ kube_vip_env }}"
+  vars:
+    ansible_python_interpreter: "{{ venv.virtualenv }}/bin/python"
+    # Leader election is pointless with one control-plane node and only makes the VIP depend on API server latency.
+    kube_vip_env: >-
+      {{ [{'name': 'vip_leaderelection', 'value': 'false'}]
+         if groups[group_name_master | default('master')] | length == 1
+         else [{'name': 'vip_leaseduration', 'value': '60'},
+               {'name': 'vip_renewdeadline', 'value': '40'},
+               {'name': 'vip_retryperiod', 'value': '5'}] }}
+
+# The patch restarts kube-vip, and the kubeconfig points at the VIP.
+- name: Wait for the API server on the VIP
+  ansible.builtin.wait_for:
+    host: "{{ apiserver_endpoint }}"
+    port: 6443
+    timeout: 180

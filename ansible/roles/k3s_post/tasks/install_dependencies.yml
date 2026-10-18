@@ -1,0 +1,61 @@
+---
+- name: Get installed Helm version
+  ansible.builtin.command: /usr/local/bin/helm version --short
+  register: helm_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Helm
+  become: true
+  ansible.builtin.unarchive:
+    src: https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz
+    dest: /usr/local/bin
+    extra_opts: --strip-components=1
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: true
+  when: helm_installed.stdout.split('+') | first != 'v' ~ helm_version
+
+- name: List Helm plugins
+  ansible.builtin.command: /usr/local/bin/helm plugin list
+  register: helm_plugins
+  changed_when: false
+
+# helm plugin install fails when a different version is already installed.
+- name: Remove outdated Helm diff plugin
+  ansible.builtin.command: /usr/local/bin/helm plugin uninstall diff
+  when: >-
+    helm_plugins.stdout_lines
+    | select('match', '^diff\s')
+    | reject('match', '^diff\s+' ~ helm_diff_version ~ '\s')
+    | list | length > 0
+
+# Installing from a tarball needs no git, and --verify=false skips Helm 4's provenance check.
+- name: Install Helm diff plugin
+  ansible.builtin.command: >-
+    /usr/local/bin/helm plugin install
+    https://github.com/databus23/helm-diff/releases/download/v{{ helm_diff_version }}/diff-{{ helm_diff_version }}-linux-amd64.tgz
+    --verify=false
+  when: >-
+    helm_plugins.stdout_lines
+    | select('match', '^diff\s+' ~ helm_diff_version ~ '\s')
+    | list | length == 0
+
+- name: Install Python
+  become: true
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+
+- name: Install Python libraries
+  ansible.builtin.pip:
+    name:
+      - kubernetes
+      - PyYAML
+      - jsonpatch
+    virtualenv: "{{ ansible_env.HOME }}/ansible/venv"
+    virtualenv_command: python3 -m venv
+  register: venv

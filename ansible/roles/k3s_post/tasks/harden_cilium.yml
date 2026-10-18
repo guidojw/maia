@@ -1,0 +1,23 @@
+---
+# The operator exits when it cannot renew its leader-election lease within 10s, which happens whenever the API server stalls.
+- name: Harden Cilium operator
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium
+    chart_repo_url: https://helm.cilium.io
+    chart_version: "{{ cilium_tag | regex_replace('^v', '') }}"
+    release_namespace: kube-system
+    reset_values: false
+    reuse_values: true
+    values:
+      operator:
+        extraArgs:
+          - --leader-election-lease-duration=60s
+          - --leader-election-renew-deadline=40s
+          - --leader-election-retry-period=5s
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
