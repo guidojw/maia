@@ -1,0 +1,484 @@
+# Default values for crowdsec.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+crowdsec:
+  # cs-routeros-bouncer, which pushes the LAPI decisions to the MikroTik router.
+  bouncer:
+    # Deploy the bouncer and its network policy rules.
+    enabled: true
+    image:
+      repository: ghcr.io/jmrplens/cs-routeros-bouncer
+      tag: v1.9.0
+      pullPolicy: IfNotPresent
+    # Secret with the keys api-key (bouncer key of the LAPI) and mikrotik-password.
+    existingSecret: crowdsec-routeros-bouncer
+    mikrotik:
+      # host:port of the RouterOS API, 8729 is api-ssl.
+      address: ""
+      # RouterOS user the bouncer logs in as, its password is the mikrotik-password key of the secret.
+      username: crowdsec
+      # Connect to the API over TLS, port 8729.
+      tls: true
+      # Skip verifying the router's certificate, needed for a self-signed one.
+      tlsInsecure: false
+    crowdsec:
+      # Decision origins to push to the router, empty pushes everything including the community blocklist (~20k entries).
+      origins: []
+    firewall:
+      # Block this IP family on the router.
+      ipv4: true
+      ipv6: true
+      # What the router does with blocked traffic: drop or reject.
+      denyAction: drop
+    # Bouncer log level, e.g. debug, info, warn or error.
+    logLevel: info
+    # Extra container environment variables, as Kubernetes env entries.
+    extraEnv: []
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+
+  # Extra ignore list for the agent, so these ranges never get banned.
+  whitelist:
+    # Ranges ignored besides the CrowdSec default of 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 and ::1.
+    cidrs:
+      # Unique local
+      - fc00::/7
+      # Cloudflare IPv4
+      - 173.245.48.0/20
+      - 103.21.244.0/22
+      - 103.22.200.0/22
+      - 103.31.4.0/22
+      - 141.101.64.0/18
+      - 108.162.192.0/18
+      - 190.93.240.0/20
+      - 188.114.96.0/20
+      - 197.234.240.0/22
+      - 198.41.128.0/17
+      - 162.158.0.0/15
+      - 104.16.0.0/13
+      - 104.24.0.0/14
+      - 172.64.0.0/13
+      - 131.0.72.0/22
+      # Cloudflare IPv6
+      - 2400:cb00::/32
+      - 2606:4700::/32
+      - 2803:f800::/32
+      - 2405:b500::/32
+      - 2405:8100::/32
+      - 2a06:98c0::/29
+      - 2c0f:f248::/32
+    # Additional ranges to ignore, e.g. the global IPv6 prefix of the LAN.
+    extraCidrs: []
+
+  # Default-deny network policies with only the flows between the agent, LAPI, bouncer and router allowed.
+  networkPolicy:
+    enabled: true
+    router:
+      # IP of the router with /32, the port is taken from bouncer.mikrotik.address.
+      cidr: ""
+    # Namespace allowed to scrape the metrics ports, empty allows none.
+    metricsNamespace: ""
+    # Ranges the HTTPS egress of the LAPI and agent must not reach.
+    internalCidrs:
+      ipv4:
+        # Private networks
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        # Link-local
+        - 169.254.0.0/16
+      ipv6:
+        # Unique local
+        - fc00::/7
+        # Link-local
+        - fe80::/10
+
+engine:
+  ## @section Global
+  ## @param container_runtime [default: docker] [string] for raw logs format: docker or containerd
+  container_runtime: containerd
+
+  ## @section Image
+  # The Debian variant ships journalctl, which the journalctl acquisition needs.
+  image:
+    ## @param image.tag [string] docker image tag (empty defaults to chart AppVersion)
+    tag: v1.8.1-debian
+
+  # Here you can specify your own custom configuration to be loaded in crowdsec agent or lapi
+  # Each config needs to be a multi-line using '|' in YAML specs
+  # for the agent those configs will be loaded : parsers, scenarios, postoverflows, simulation.yaml
+  # for the lapi those configs will be loaded : profiles.yaml, notifications, console.yaml
+  # These entries can be split across multiple values files, or injected with `--set-file`
+  # when using the chart from a remote repository.
+  ## @section Configuration
+  config:
+    # -- Profiles configuration (https://docs.crowdsec.net/docs/next/profiles/format/#profile-configuration-example)
+    # This file is only mounted in the lapi pod
+    ## @param config.profiles.yaml Use for defining custom profiles
+    # Replaces the built-in profiles, so the ban profiles are repeated here.
+    profiles.yaml: |
+      name: default_ip_remediation
+      filters:
+        - Alert.Remediation == true && Alert.GetScope() == "Ip"
+      decisions:
+        - type: ban
+          duration: 4h
+      notifications:
+        - discord
+      on_success: break
+      ---
+      name: default_range_remediation
+      filters:
+        - Alert.Remediation == true && Alert.GetScope() == "Range"
+      decisions:
+        - type: ban
+          duration: 4h
+      notifications:
+        - discord
+      on_success: break
+
+    # -- General configuration (https://docs.crowdsec.net/docs/configuration/crowdsec_configuration/#configuration-example)
+    # This file is mounted in the lapi pod
+    ## @param config.config.yaml.local [string] main configuration file local overriden values. This is merged with main configuration file.
+    config.yaml.local: |
+      api:
+        server:
+          auto_registration:
+            enabled: true
+            token: "${REGISTRATION_TOKEN}" # /!\ Do not modify this variable (auto-generated and handled by the chart)
+            allowed_ranges:
+              - 127.0.0.1/32
+              - 10.52.0.0/16 # pod CIDR
+      db_config:
+        flush:
+          agents_autodelete:
+            # Every agent pod registers as a new machine, drop the ones that stopped heartbeating.
+            login_password: 1h
+      # The default user nobody needs CAP_SETUID, which the LAPI has dropped, so run plugins as the LAPI user.
+      plugin_config:
+        user: ""
+        group: ""
+
+    # -- notifications configuration (https://docs.crowdsec.net/docs/next/notification_plugins/intro)
+    # Those files are only mounted in the lapi pod
+    ## @param config.notifications notification on alert configuration
+    notifications:
+      http.yaml: |
+        type: http
+        name: discord
+        log_level: info
+        group_wait: 10m
+        # Discord accepts at most 10 embeds per message, there is one per IP.
+        group_threshold: 10
+        # One message per batch (the plugin sends one request per batch) with one embed per IP.
+        format: |
+          {{- $countries := dict -}}
+          {{- $ases := dict -}}
+          {{- $bans := dict -}}
+          {{- $ips := dict -}}
+          {{- range . -}}
+            {{- $ip := .Source.Value | toJson | trimAll "\"" -}}
+            {{- $scenario := .Scenario | toJson | trimAll "\"" -}}
+            {{- $_ := set $countries $ip (or .Source.Cn "unknown") -}}
+            {{- $_ := set $ases $ip (or .Source.AsName "unknown") -}}
+            {{- with .Decisions}}{{with index . 0}}
+              {{- $type := .Type | toJson | trimAll "\"" -}}
+              {{- $duration := .Duration | toJson | trimAll "\"" -}}
+              {{- $_ := set $bans $ip (print $type " for " $duration) -}}
+            {{- end}}{{end -}}
+            {{- $events := get $ips $ip | default (dict) -}}
+            {{- $_ := set $events $scenario (add (get $events $scenario | default 0) .EventsCount) -}}
+            {{- $_ := set $ips $ip $events -}}
+          {{- end -}}
+          {{- $first := true -}}
+          {
+            "embeds": [
+              {{- range $ip, $events := $ips}}{{if not $first}},{{end}}{{$first = false}}
+              {
+                "author": {
+                  "name": "CrowdSec",
+                  "icon_url": "https://avatars.githubusercontent.com/u/63284097?v=4"
+                },
+                "title": "CrowdSec ban",
+                "color": 15158332,
+                "fields": [
+                  {
+                    "name": "IP",
+                    "value": {{$ip | toJson}},
+                    "inline": true
+                  },
+                  {
+                    "name": "Country",
+                    "value": {{get $countries $ip | toJson}},
+                    "inline": true
+                  },
+                  {
+                    "name": "AS",
+                    "value": {{get $ases $ip | toJson}},
+                    "inline": true
+                  },
+                  {
+                    "name": "Scenarios",
+                    "value": "{{range $scenario, $count := $events}}• {{$scenario}} ({{$count}} event{{if ne $count 1}}s{{end}})\n{{end}}"
+                  },
+                  {
+                    "name": "Ban",
+                    "value": {{get $bans $ip | default "none" | toJson}},
+                    "inline": true
+                  }
+                ]
+              }
+              {{- end}}
+            ]
+          }
+        url: ${DISCORD_WEBHOOK_URL}
+        method: POST
+        headers:
+          Content-Type: application/json
+
+  # agent will deploy pod on every node as daemonSet to read wanted pods logs
+  ## @section agent
+  agent:
+    # -- To add custom acquisitions using available datasources (https://docs.crowdsec.net/docs/next/data_sources/intro)
+    ## @param agent.additionalAcquisition [array] Extra log acquisition sources (see https://docs.crowdsec.net/docs/next/data_sources/intro)
+    additionalAcquisition:
+      - source: journalctl
+        journalctl_filter:
+          - _SYSTEMD_UNIT=ssh.service
+        labels:
+          type: syslog
+
+    # -- Specify each pod you want to process it logs (namespace, podName and program)
+    ## @param agent.acquisition [array] Pod log acquisition definitions (namespace, podName, program, etc.)
+    # Specify each pod you want to process it logs (namespace, podName and program)
+    acquisition:
+      - namespace: traefik
+        podName: traefik-*
+        program: traefik
+
+    # -- Extra init containers to be added to agent pods
+    ## @param agent.extraInitContainers [array] Extra init containers for agent pods
+    # Run after the chart's registration init container, which creates the credentials as root with mode 0600.
+    extraInitContainers:
+      # Root can read the image's /staging (mode 0600), the agent user cannot. This only makes a world-readable
+      # copy, the agent-owned copy is made below, and the registration credentials get group read access.
+      - name: copy-staging
+        # Keep in sync with the engine image tag.
+        image: crowdsecurity/crowdsec:v1.8.1-debian
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -e
+            cp -a /staging/. /scratch/
+            chmod -R a+rX /scratch
+            chmod 0640 /tmp_config/local_api_credentials.yaml
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        volumeMounts:
+          - name: staging-src
+            mountPath: /scratch
+          - name: crowdsec-config
+            mountPath: /tmp_config
+
+      # Copies owned by the agent user, as the hub data update sets file times and rsync sets directory times.
+      # /etc/crowdsec gets only the directory the whitelist mount sits in: the start script fills it from /staging
+      # when it finds neither config.yaml nor credentials there.
+      - name: seed-agent-dirs
+        image: crowdsecurity/crowdsec:v1.8.1-debian
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -e
+            mkdir -p /seed/etc/parsers/s02-enrich
+            cp -R /scratch/. /seed/staging/
+            cp -R /var/lib/crowdsec/. /seed/var/
+        securityContext:
+          runAsUser: 65532
+          runAsGroup: 65532
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        volumeMounts:
+          - name: staging-src
+            mountPath: /scratch
+            readOnly: true
+          - name: staging
+            mountPath: /seed/staging
+          - name: etc-crowdsec
+            mountPath: /seed/etc
+          - name: var-lib-crowdsec
+            mountPath: /seed/var
+
+    # -- Extra volumes to be added to agent pods
+    ## @param agent.extraVolumes [array] Extra volumes for agent pods
+    extraVolumes:
+      - name: whitelist
+        configMap:
+          name: crowdsec-whitelist
+      - name: host-pods-logs
+        hostPath:
+          path: /var/log/pods
+      - name: host-containers-logs
+        hostPath:
+          path: /var/log/containers
+      - name: host-journal
+        hostPath:
+          path: /var/log/journal
+      # journalctl only finds the host's journal files under the host's machine ID.
+      - name: host-machine-id
+        hostPath:
+          path: /etc/machine-id
+          type: File
+      # Writable copies of the image paths the start script writes to, seeded by the init containers below.
+      - name: staging-src
+        emptyDir: {}
+      - name: staging
+        emptyDir: {}
+      - name: etc-crowdsec
+        emptyDir: {}
+      - name: var-lib-crowdsec
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+
+    # -- Extra volumeMounts to be added to agent pods
+    ## @param agent.extraVolumeMounts [array] Extra volume mounts for agent pods
+    extraVolumeMounts:
+      - name: whitelist
+        mountPath: /etc/crowdsec/parsers/s02-enrich/local-networks.yaml
+        subPath: local-networks.yaml
+        readOnly: true
+      - name: host-pods-logs
+        mountPath: /var/log/pods
+        readOnly: true
+      - name: host-containers-logs
+        mountPath: /var/log/containers
+        readOnly: true
+      - name: host-journal
+        mountPath: /var/log/journal
+        readOnly: true
+      - name: host-machine-id
+        mountPath: /etc/machine-id
+        readOnly: true
+      - name: staging
+        mountPath: /staging
+      - name: etc-crowdsec
+        mountPath: /etc/crowdsec
+      - name: var-lib-crowdsec
+        mountPath: /var/lib/crowdsec
+      - name: tmp
+        mountPath: /tmp
+
+    # -- Pod securityContext
+    ## @param agent.podSecurityContext [object] Security context for agent pods
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+      # Group 0 reads the host pod logs (root:root 0640), group 999 (systemd-journal) the journal, without running as root.
+      supplementalGroups:
+        - 0
+        - 999
+
+    # -- Container securityContext
+    ## @param agent.securityContext [object] Security context for agent containers
+    securityContext:
+      runAsUser: 65532
+      runAsGroup: 65532
+      runAsNonRoot: true
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+
+    # -- Enable hostPath to /var/log
+    ## @param agent.hostVarLog [default: true] [object] Mount hostPath `/var/log` into the agent pod
+    # Only the pod log directories, not the whole /var/log, the symlinks in containers point into pods.
+    hostVarLog: false
+
+    # -- environment variables from crowdsecurity/crowdsec docker image
+    ## @param agent.env Environment variables passed to the crowdsecurity/crowdsec container
+    env:
+      - name: COLLECTIONS
+        value: crowdsecurity/traefik crowdsecurity/base-http-scenarios crowdsecurity/http-cve crowdsecurity/sshd
+      # Parses the containerd log wrapper, the chart does not install it.
+      - name: PARSERS
+        value: crowdsecurity/cri-logs
+
+    # -- wait-for-lapi init container
+    wait_for_lapi:
+      # -- Container securityContext
+      ## @param agent.wait_for_lapi.securityContext [object] Security context for the wait-for-lapi init container
+      securityContext:
+        capabilities:
+          drop:
+            - ALL
+
+  # lapi will deploy pod with crowdsec lapi and dashboard as deployment
+  ## @section lapi
+  lapi:
+    # -- environment variables from crowdsecurity/crowdsec docker image
+    ## @param lapi.env [array] Extra environment variables passed to the crowdsecurity/crowdsec container
+    env:
+      # Registers a bouncer named routeros with this key.
+      - name: BOUNCER_KEY_routeros
+        valueFrom:
+          secretKeyRef:
+            name: crowdsec-routeros-bouncer
+            key: api-key
+      # Enrolls the instance in the CrowdSec Console when the key is present in the secret.
+      - name: ENROLL_KEY
+        valueFrom:
+          secretKeyRef:
+            name: crowdsec-routeros-bouncer
+            key: enroll-key
+            optional: true
+      # Name of the instance in the console, the node the LAPI runs on.
+      - name: ENROLL_INSTANCE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      # Discord webhook URL for the http notification, read when the plugin config loads.
+      - name: DISCORD_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: crowdsec-routeros-bouncer
+            key: discord-webhook-url
+            optional: true
+
+    # -- Pod securityContext
+    ## @param lapi.podSecurityContext [object] Security context for LAPI pods
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+
+    # -- Container securityContext
+    ## @param lapi.securityContext [object] Security context for the LAPI contaienr
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+
+    # -- Enable persistent volumes
+    persistentVolume:
+      # Persistent volume for data folder. Stores e.g. registered bouncer api keys
+      data:
+        ## @param lapi.persistentVolume.data.storageClassName [string] StorageClass name for the data PVC
+        storageClassName: ssd
+      config:
+        ## @param lapi.persistentVolume.config.storageClassName [string] StorageClass name for the config PVC
+        storageClassName: ssd

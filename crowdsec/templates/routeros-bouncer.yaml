@@ -1,0 +1,118 @@
+{{- $bouncer := .Values.crowdsec.bouncer }}
+{{- if $bouncer.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bouncer.name" . }}
+  labels:
+    {{- include "bouncer.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "bouncer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bouncer.selectorLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cs-routeros-bouncer
+          image: {{ $bouncer.image.repository }}:{{ $bouncer.image.tag }}
+          imagePullPolicy: {{ $bouncer.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: CROWDSEC_URL
+              value: {{ include "bouncer.lapiUrl" . }}
+            - name: CROWDSEC_BOUNCER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $bouncer.existingSecret }}
+                  key: api-key
+            - name: CROWDSEC_ORIGINS
+              value: {{ join " " $bouncer.crowdsec.origins | quote }}
+            - name: MIKROTIK_HOST
+              value: {{ required "crowdsec.bouncer.mikrotik.address is required" $bouncer.mikrotik.address | quote }}
+            - name: MIKROTIK_USER
+              value: {{ $bouncer.mikrotik.username | quote }}
+            - name: MIKROTIK_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $bouncer.existingSecret }}
+                  key: mikrotik-password
+            - name: MIKROTIK_TLS
+              value: {{ $bouncer.mikrotik.tls | quote }}
+            - name: MIKROTIK_TLS_INSECURE
+              value: {{ $bouncer.mikrotik.tlsInsecure | quote }}
+            - name: FIREWALL_IPV4_ENABLED
+              value: {{ $bouncer.firewall.ipv4 | quote }}
+            - name: FIREWALL_IPV6_ENABLED
+              value: {{ $bouncer.firewall.ipv6 | quote }}
+            - name: FIREWALL_DENY_ACTION
+              value: {{ $bouncer.firewall.denyAction }}
+            - name: LOG_LEVEL
+              value: {{ $bouncer.logLevel }}
+            - name: METRICS_ENABLED
+              value: "true"
+            - name: METRICS_ADDR
+              value: 0.0.0.0
+            - name: METRICS_PORT
+              value: "2112"
+            {{- with $bouncer.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: metrics
+              containerPort: 2112
+          startupProbe:
+            httpGet:
+              path: /health
+              port: metrics
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: metrics
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: metrics
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml $bouncer.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bouncer.name" . }}
+  labels:
+    {{- include "bouncer.selectorLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "bouncer.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: metrics
+      port: 2112
+      targetPort: metrics
+{{- end }}

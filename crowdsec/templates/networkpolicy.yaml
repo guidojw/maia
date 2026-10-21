@@ -1,0 +1,170 @@
+{{- if .Values.crowdsec.networkPolicy.enabled }}
+{{- $policy := .Values.crowdsec.networkPolicy }}
+{{- $bouncer := .Values.crowdsec.bouncer }}
+{{- $release := .Release.Name }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: crowdsec-lapi
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: {{ $release }}
+      type: lapi
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              k8s-app: {{ $release }}
+              type: agent
+        {{- if $bouncer.enabled }}
+        - podSelector:
+            matchLabels:
+              {{- include "bouncer.selectorLabels" . | nindent 14 }}
+        {{- end }}
+      ports:
+        - port: 8080
+          protocol: TCP
+    {{- with $policy.metricsNamespace }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+      ports:
+        - port: 6060
+          protocol: TCP
+    {{- end }}
+  egress:
+    # Central API and hub
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- toYaml $policy.internalCidrs.ipv4 | nindent 14 }}
+        - ipBlock:
+            cidr: ::/0
+            except:
+              {{- toYaml $policy.internalCidrs.ipv6 | nindent 14 }}
+      ports:
+        - port: 443
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: crowdsec-agent
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: {{ $release }}
+      type: agent
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- with $policy.metricsNamespace }}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+      ports:
+        - port: 6060
+          protocol: TCP
+  {{- end }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: {{ $release }}
+              type: lapi
+      ports:
+        - port: 8080
+          protocol: TCP
+    # Hub downloads (collections)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- toYaml $policy.internalCidrs.ipv4 | nindent 14 }}
+        - ipBlock:
+            cidr: ::/0
+            except:
+              {{- toYaml $policy.internalCidrs.ipv6 | nindent 14 }}
+      ports:
+        - port: 443
+          protocol: TCP
+{{- if $bouncer.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: routeros-bouncer
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bouncer.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- with $policy.metricsNamespace }}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+      ports:
+        - port: 2112
+          protocol: TCP
+  {{- end }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: {{ $release }}
+              type: lapi
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - ipBlock:
+            cidr: {{ required "crowdsec.networkPolicy.router.cidr is required" $policy.router.cidr }}
+      ports:
+        - port: {{ required "crowdsec.bouncer.mikrotik.address is required" $bouncer.mikrotik.address | regexFind ":[0-9]+$" | trimPrefix ":" | int }}
+          protocol: TCP
+{{- end }}
+{{- end }}
