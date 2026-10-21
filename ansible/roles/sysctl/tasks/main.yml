@@ -1,0 +1,18 @@
+---
+# The per-user default is low for workloads that watch many files, and root processes on the node share it.
+- name: Raise the inotify instance limit
+  ansible.posix.sysctl:
+    name: fs.inotify.max_user_instances
+    value: 1024
+    sysctl_file: /etc/sysctl.d/99-inotify.conf
+    state: present
+    reload: true
+
+# The default is low for workloads that watch many files, such as log collectors.
+- name: Raise the inotify watch limit
+  ansible.posix.sysctl:
+    name: fs.inotify.max_user_watches
+    value: 524288
+    sysctl_file: /etc/sysctl.d/99-inotify.conf
+    state: present
+    reload: true
