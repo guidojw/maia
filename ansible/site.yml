@@ -1,4 +1,10 @@
 ---
+- name: Configure kernel settings
+  hosts: maia
+  become: true
+  roles:
+    - role: sysctl
+
 - name: Set up network
   hosts: maia
   become: true
