@@ -10,6 +10,8 @@ network:
       # Keep the parent interface's default route preferred, so egress is deterministic.
       dhcp4-overrides:
         route-metric: 200
+        # The parent interface already provides the same DNS servers, and resolved does not dedupe across links.
+        use-dns: false
 {% if vlan.routes is defined %}
       routes:
 {% for route in vlan.routes %}
