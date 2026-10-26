@@ -8,7 +8,8 @@
     chart_version: "{{ cilium_tag | regex_replace('^v', '') }}"
     release_namespace: kube-system
     reset_values: false
-    reuse_values: true
+    # reuse_values would keep the old release's image tags when chart_version changes.
+    reset_then_reuse_values: true
     values:
       operator:
         extraArgs:
