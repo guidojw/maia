@@ -1,0 +1,16 @@
+{{- $witelist := .Values.crowdsec.whitelist }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # Fixed, the engine values reference it and cannot use the release name.
+  name: crowdsec-whitelist
+data:
+  local-networks.yaml: |
+    name: local/local-networks
+    description: Whitelist the configured local networks and the Cloudflare proxies
+    whitelist:
+      reason: local network or Cloudflare
+      cidr:
+        {{- range concat $witelist.cidrs $witelist.extraCidrs }}
+        - {{ . }}
+        {{- end }}
