@@ -157,7 +157,7 @@ engine:
       db_config:
         flush:
           agents_autodelete:
-            # Every agent pod registers as a new machine, drop the ones that stopped heartbeating.
+            # Stale machines of stopped agent pods stay, remove them with `cscli machines delete`.
             login_password: 1h
       # The default user nobody needs CAP_SETUID, which the LAPI has dropped, so run plugins as the LAPI user.
       plugin_config:
