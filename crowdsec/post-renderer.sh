@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Helm post-renderer for the crowdsec chart, which has no option for these two changes:
-# the LAPI and agent pods do not mount the Kubernetes API token, and the agent's registration init container
-# waits with bash instead of nc, which the Debian image lacks.
+# Helm post-renderer for the crowdsec chart, which has no option for these three changes:
+# the LAPI and agent pods do not mount the Kubernetes API token, the agent's registration init container
+# waits with bash instead of nc, which the Debian image lacks, and it registers only once per pod, as the
+# machine name is the pod name and a re-run after a node reboot fails with "user already exist".
 set -euo pipefail
 
 DIR=$(mktemp -d)
@@ -44,9 +45,11 @@ patches:
             - -c
             - >-
               until bash -c 'echo > /dev/tcp/$LAPI_HOST/$LAPI_PORT' 2>/dev/null; do echo waiting for lapi to start; sleep 5; done;
+              if [ ! -s /tmp_config/local_api_credentials.yaml ]; then
               ln -s /staging/etc/crowdsec /etc/crowdsec &&
               cscli lapi register --machine "$USERNAME" -u "$LAPI_URL" --token "$REGISTRATION_TOKEN" &&
-              cp /etc/crowdsec/local_api_credentials.yaml /tmp_config/local_api_credentials.yaml
+              cp /etc/crowdsec/local_api_credentials.yaml /tmp_config/local_api_credentials.yaml;
+              fi
 EOF
 
 kubectl kustomize "$DIR"
