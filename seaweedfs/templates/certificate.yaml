@@ -19,5 +19,5 @@ spec:
   dnsNames:
   - "{{ .Values.seaweedfs.s3IngressHost }}"
   issuerRef:
-    name: letsencrypt-production
+    name: letsencrypt-transip-production
     kind: ClusterIssuer

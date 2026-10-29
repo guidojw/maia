@@ -33,6 +33,7 @@ jobs:
             --atomic \
             --dependency-update \
             -n cert-manager \
-            -f cert-manager/values.yaml 
+            -f cert-manager/values.yaml \
+            --set "global.transip.accountName=$TRANSIP_ACCOUNT_NAME"
         env:
-          ACME_EMAIL: ${{ secrets.CERT_MANAGER_ACME_EMAIL }}
+          TRANSIP_ACCOUNT_NAME: ${{ secrets.TRANSIP_ACCOUNT_NAME }}
