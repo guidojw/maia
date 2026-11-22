@@ -22,7 +22,7 @@ dependencies:
     version: 2.3.2
     repository: oci://ghcr.io/m0nsterrr/helm-charts
   - name: flaresolverr
-    version: 2.4.1
+    version: 2.6.0
     repository: oci://ghcr.io/m0nsterrr/helm-charts
     condition: flaresolverr.enabled
   - name: jellyfin

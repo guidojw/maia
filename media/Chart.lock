@@ -4,7 +4,7 @@ dependencies:
   version: 2.3.2
 - name: flaresolverr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 2.4.1
+  version: 2.6.0
 - name: jellyfin
   repository: https://jellyfin.github.io/jellyfin-helm
   version: 3.2.0
@@ -29,5 +29,5 @@ dependencies:
 - name: sonarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
   version: 2.2.3
-digest: sha256:9d88c1643687464d0c1b1576b7846f3abaa333a88ad5cdcb58856382cefb6add
-generated: "2026-10-14T22:04:24.315583978+02:00"
+digest: sha256:8fba7c4397f5d8ef3a4bbc086ab58892f1145c97071df79bebd245562a2b24c7
+generated: "2026-11-22T21:54:05.206154851Z"
