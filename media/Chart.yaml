@@ -26,7 +26,7 @@ dependencies:
     repository: oci://ghcr.io/m0nsterrr/helm-charts
     condition: flaresolverr.enabled
   - name: jellyfin
-    version: 3.2.0
+    version: 3.7.0
     repository: https://jellyfin.github.io/jellyfin-helm
   - name: oauth2-proxy
     version: 10.7.1
