@@ -84,6 +84,10 @@ kubectl rollout restart -n crowdsec daemonset/crowdsec-agent
 
   Example commands are `cscli decisions list`, `cscli alerts list`, `cscli capi status`, `cscli console status` and `cscli notifications test discord`.
 - Traefik's access log must be enabled and its pods must be named `traefik-*` in the `traefik` namespace (see `engine.agent.acquisition`).
+- The Traefik acquisition sets `poll_without_inotify: true`.
+  `/var/log/containers/*` are symlinks to the pod logs, which the kubelet rotates at 10Mi, and the agent cannot detect that rotation with inotify on a symlink.
+  It then keeps reading the renamed file and silently stops parsing, so no bans and no Discord notifications follow until the agent restarts.
+  Check that it still reads with `kubectl exec -n crowdsec ds/crowdsec-agent -- cscli metrics show acquisition`: the line count of the Traefik file keeps growing.
 - Bans are only useful if the log contains the real client IP.
   Traefik takes it from `X-Forwarded-For` for the trusted IPs (`forwardedHeaders.trustedIPs`) and otherwise from the connection, so the Traefik service must preserve the source IP.
 - By default all decisions are pushed to the router, including the community blocklist (about 20k entries) and the blocklists you subscribed to in the console.
