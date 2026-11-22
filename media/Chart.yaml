@@ -19,7 +19,7 @@ version: 0.1.0
 
 dependencies:
   - name: bazarr
-    version: 2.3.2
+    version: 2.5.0
     repository: oci://ghcr.io/m0nsterrr/helm-charts
   - name: flaresolverr
     version: 2.4.1

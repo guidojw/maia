@@ -1,7 +1,7 @@
 dependencies:
 - name: bazarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 2.3.2
+  version: 2.5.0
 - name: flaresolverr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
   version: 2.4.1
@@ -29,5 +29,5 @@ dependencies:
 - name: sonarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
   version: 2.2.3
-digest: sha256:9d88c1643687464d0c1b1576b7846f3abaa333a88ad5cdcb58856382cefb6add
-generated: "2026-10-14T22:04:24.315583978+02:00"
+digest: sha256:8f7275545e45fa648ce368af05828dae50e9d67e4313c51262a8bcdd947ea99f
+generated: "2026-11-22T19:54:49.54860249Z"
