@@ -1,0 +1,12 @@
+---
+- name: Update boot configuration
+  ansible.builtin.command: "{{ 'proxmox-boot-tool refresh' if proxmox_gpu_boot_tool else 'update-grub' }}"
+  changed_when: true
+
+- name: Update initramfs
+  ansible.builtin.command: update-initramfs -u -k all
+  changed_when: true
+
+- name: Reboot required
+  ansible.builtin.debug:
+    msg: Reboot the Proxmox host to apply the IOMMU and VFIO changes, this stops all its VMs.

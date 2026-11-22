@@ -1,0 +1,24 @@
+{{- $preferences := .Values.media.qbittorrentPreferences }}
+# All preferences that can be set in preferences.json: https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#set-application-preferences
+# Seeding is disabled by pausing torrents (max_ratio_act 0). Completed downloads are removed by Sonarr/Radarr (Remove Completed),
+# as max_ratio_act 1 or 3 would remove them before the import.
+# The default auth bypass of the image only has IPv4 ranges, so the IPv6 pod CIDR is added for Traefik.
+# Binding to the VPN interface stops announces from the pod IPs on eth0, which the Gluetun firewall blocks ("Operation not permitted").
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qbittorrent-preferences
+data:
+  preferences.json: |
+    {{- dict
+      "max_active_downloads" $preferences.maxActiveDownloads
+      "max_ratio_enabled" true
+      "max_ratio" $preferences.maxRatio
+      "max_seeding_time_enabled" true
+      "max_seeding_time" $preferences.maxSeedingTime
+      "max_ratio_act" 0
+      "save_path" "/data/torrents"
+      "current_network_interface" "tun0"
+      "bypass_auth_subnet_whitelist_enabled" true
+      "bypass_auth_subnet_whitelist" "10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 2001:cafe:52::/56"
+      | toJson | nindent 4 }}

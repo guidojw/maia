@@ -1,0 +1,67 @@
+---
+- name: Install the dependency of the apt repository tasks
+  ansible.builtin.apt:
+    name: python3-debian
+
+# The cloud image only enables main, the driver is in contrib and non-free and its firmware in non-free-firmware.
+- name: Add the Debian contrib and non-free repository
+  ansible.builtin.deb822_repository:
+    name: debian-non-free
+    types: deb
+    uris: http://deb.debian.org/debian
+    suites:
+      - "{{ ansible_facts.distribution_release }}"
+      - "{{ ansible_facts.distribution_release }}-updates"
+    components:
+      - contrib
+      - non-free
+      - non-free-firmware
+    signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Debian ships the driver updates through the security archive.
+- name: Add the Debian contrib and non-free security repository
+  ansible.builtin.deb822_repository:
+    name: debian-non-free-security
+    types: deb
+    uris: http://security.debian.org/debian-security
+    suites: "{{ ansible_facts.distribution_release }}-security"
+    components:
+      - contrib
+      - non-free
+      - non-free-firmware
+    signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+
+- name: Add the NVIDIA Container Toolkit repository
+  ansible.builtin.deb822_repository:
+    name: nvidia-container-toolkit
+    types: deb
+    uris: https://nvidia.github.io/libnvidia-container/stable/deb/amd64
+    suites: /
+    signed_by: https://nvidia.github.io/libnvidia-container/gpgkey
+
+- name: Install the kernel headers the NVIDIA module is built with
+  ansible.builtin.apt:
+    name:
+      - "linux-headers-{{ ansible_facts.kernel }}"
+      # The meta package of the kernel flavour, so the module is also built for the next kernels.
+      - "linux-headers-{{ ansible_facts.kernel | regex_replace('^[0-9.]+-[0-9]+-', '') }}"
+    update_cache: true
+
+# Without the recommends, as nvidia-driver would pull in the X server for a headless node.
+- name: Install the NVIDIA driver
+  ansible.builtin.apt:
+    name:
+      - nvidia-kernel-dkms
+      - nvidia-smi
+      - libcuda1
+      # The libraries of the video capability, which the container runtime mounts into the pods.
+      - libnvidia-encode1
+      - libnvcuvid1
+      - nvidia-vdpau-driver
+    install_recommends: false
+
+# K3s finds the nvidia runtime of this package only when it starts.
+- name: Install the NVIDIA Container Toolkit
+  ansible.builtin.apt:
+    name: nvidia-container-toolkit
+  notify: Restart k3s

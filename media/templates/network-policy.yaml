@@ -1,0 +1,43 @@
+# Plex and Seerr have their own login, but like the other apps they are only reached through Traefik or by the media pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: media-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/instance: {{ .Release.Name }}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.media.traefikNamespace }}
+{{- with .Values.media.plexAllowedCidrs }}
+---
+# Plex advertises its pod IP as a local connection, which clients on these networks reach directly over BGP; via Traefik Plex treats them as remote.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: media-plex-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+      app.kubernetes.io/name: plex-media-server
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    {{- range . }}
+    - ipBlock:
+        cidr: {{ . }}
+    {{- end }}
+    ports:
+    - port: {{ index $.Values "plex-media-server" "service" "port" }}
+      protocol: TCP
+{{- end }}

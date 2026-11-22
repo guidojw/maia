@@ -1,0 +1,563 @@
+# Default values for media.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Settings of the Keycloak login, they can't be nested in media as oauth2-proxy can only read global values of the parent.
+global:
+  # Host that handles the login callback.
+  oauth2ProxyIngressHost: ""
+  # Parent domain of all app hosts, e.g. .example.com.
+  cookieDomain: ""
+  keycloakUrl: ""
+
+# Values of this chart itself.
+media:
+  # Shared volume for the media library and downloads, mounted at /data in all apps except Prowlarr.
+  # A single volume is used so that hardlinks and atomic moves work between downloads and the library.
+  storageClass: bulk-retain
+  size: 500Gi
+  # Namespace of Traefik, the only namespace allowed to reach the apps besides the media pods themselves.
+  traefikNamespace: traefik
+
+  # Networks allowed to reach Plex directly, without Traefik.
+  plexAllowedCidrs:
+  - 192.168.1.0/24
+  - 192.168.5.0/24
+
+  # Hosts of the ingresses, apps without a host are only reachable inside the cluster.
+  # All hosts and global.oauth2ProxyIngressHost have to be subdomains of global.cookieDomain.
+  ingressHosts:
+    plex: ""
+    jellyfin: ""
+    seerr: ""
+    qbittorrent: ""
+    prowlarr: ""
+    sonarr: ""
+    radarr: ""
+    bazarr: ""
+
+  # Applied to qBittorrent on start, restart the deployment after changing them.
+  # Only the preferences below are configurable here, the others are in templates/qbittorrent-preferences.yaml
+  # which links to the documentation of all preferences.
+  qbittorrentPreferences:
+    # Number of torrents that download at the same time.
+    maxActiveDownloads: 5
+    # Seeding ratio at which a torrent is paused, 0 stops seeding right after the download.
+    maxRatio: 0
+    # Minutes of seeding after which a torrent is paused, 4320 is 3 days.
+    maxSeedingTime: 4320
+
+bazarr:
+  fullnameOverride: bazarr
+
+  service:
+    port: 80
+
+  # Creating PVC to store configuration.
+  config:
+    persistence:
+      # Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided.
+      storageClass: ssd-retain
+      # Size of persistent disk.
+      size: 1Gi
+
+  serviceAccount:
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: false
+
+  # Environment variables to add to the bazarr pods.
+  extraEnv:
+  - name: TZ
+    value: Europe/Amsterdam
+
+  # The media volume is ReadWriteOnce, so all pods using it have to run on the same node.
+  # The anchors are defined here as this is the first app using them, the other apps refer to them.
+  podLabels:
+    media/shared-volume: "true"
+  affinity: &mediaAffinity
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            media/shared-volume: "true"
+
+  # Additional volumes on the output Deployment definition.
+  volumes: &mediaVolumes
+  - name: media
+    persistentVolumeClaim:
+      claimName: media
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts: &mediaVolumeMounts
+  - name: media
+    mountPath: /data
+
+# Solves Cloudflare challenges for indexers, add it as an indexer proxy in Prowlarr with host http://flaresolverr.
+# Disabled as it often fails to solve the challenges and makes indexer tests hang.
+flaresolverr:
+  enabled: false
+  fullnameOverride: flaresolverr
+
+  # Environment variables to add to the flaresolverr pods.
+  extraEnv:
+  - name: TZ
+    value: Europe/Amsterdam
+
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube.
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+# Media server with the same library as Plex. It has no ForwardAuth login, as its clients can't follow the Keycloak redirect,
+# users sign in through the SSO plugin instead, see the README.
+jellyfin:
+  fullnameOverride: jellyfin
+
+  # The config volume is ReadWriteOnce, a rolling update would start the new pod before the old one released it.
+  deploymentStrategy:
+    type: Recreate
+
+  service:
+    port: 8096
+
+  serviceAccount:
+    # Automatically mount API credentials for the service account.
+    automount: false
+
+  # Resource requests and limits for the Jellyfin container.
+  resources:
+    requests:
+      cpu: 250m
+    limits:
+      cpu: "2"
+
+  # Security context for the pod.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+
+  # Security context for the container.
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Additional init containers to run inside the pod.
+  # Init containers run before the main application container starts.
+  extraInitContainers:
+  # Gives the root-owned config volume to the container user, as fsGroup would also change the library.
+  - name: config-owner
+    image: docker.io/curlimages/curl:8.14.1
+    command: [chown, -R, 1000:1000, /config]
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+        add:
+        - CHOWN
+        - DAC_OVERRIDE
+      runAsNonRoot: false
+      runAsUser: 0
+      seccompProfile:
+        type: RuntimeDefault
+    volumeMounts:
+    - name: config
+      mountPath: /config
+
+  persistence:
+    config:
+      # If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.
+      storageClass: ssd-retain
+      size: 5Gi
+    media:
+      # Set to false to use emptyDir, the shared library is mounted at /data below to keep the same paths as in the other apps.
+      enabled: false
+
+  jellyfin:
+    # Additional environment variables for the container.
+    env:
+    - name: TZ
+      value: Europe/Amsterdam
+
+  # Additional labels to add to the pod.
+  # The media volume is ReadWriteOnce, so all pods using it have to run on the same node.
+  podLabels:
+    media/shared-volume: "true"
+  # Affinity rules for pod scheduling.
+  affinity: *mediaAffinity
+
+  # Configure liveness probe for Jellyfin.
+  # /health returns 503 until Jellyfin finished starting, which takes minutes when the node CPU is busy.
+  # The chart's startup probe only checks the port, so the liveness probe waits instead.
+  # A software transcode can starve the CPU, so it gets 2 minutes to answer instead of being killed after 30 seconds.
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 300
+    failureThreshold: 12
+    timeoutSeconds: 10
+  # Configure readiness probe for Jellyfin.
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    failureThreshold: 12
+    timeoutSeconds: 10
+
+  # Additional volumes to mount in the Jellyfin pod.
+  # Not the media anchor, its name clashes with the chart's own media volume.
+  volumes:
+  - name: library
+    persistentVolumeClaim:
+      claimName: media
+  # Additional volume mounts for the Jellyfin container.
+  # Read-only, Jellyfin doesn't need to change the library.
+  volumeMounts:
+  - name: library
+    mountPath: /data
+    readOnly: true
+
+# Keycloak login in front of the ingresses of all apps except Plex, Jellyfin and Seerr, through a Traefik ForwardAuth middleware.
+# The apps themselves have their login disabled, so they must never be exposed without it.
+oauth2-proxy:
+  fullnameOverride: oauth2-proxy
+
+  serviceAccount:
+    automountServiceAccountToken: false
+
+  config:
+    # Use an existing secret for OAuth2 credentials, with client-secret and cookie-secret.
+    existingSecret: media-keycloak-secret
+    # List of secret keys to include in the secret and expose as environment variables.
+    # By default, all three secrets are required. To exclude certain secrets
+    # (e.g., when using federated token authentication), remove them from this list.
+    # The client-id is not needed, as it is set in extraArgs.
+    requiredSecretKeys:
+    # - client-id
+    - client-secret
+    - cookie-secret
+
+  extraArgs:
+    provider: keycloak-oidc
+    oidc-issuer-url: https://{{ required "global.keycloakUrl is required" .Values.global.keycloakUrl }}/realms/homelab
+    client-id: media
+    redirect-url: https://{{ required "global.oauth2ProxyIngressHost is required" .Values.global.oauth2ProxyIngressHost }}/oauth2/callback
+    # The session cookie is shared by all app hosts, so it has to be set on their common parent domain.
+    cookie-domain: '{{ required "global.cookieDomain is required" .Values.global.cookieDomain }}'
+    whitelist-domain: '{{ .Values.global.cookieDomain }}'
+    # Removal from the group is only noticed at the next login, so this is how long a removed user keeps access.
+    cookie-expire: 24h
+    # Keycloak group whose members may access the apps.
+    allowed-group: media-users
+    # Without this oauth2-proxy also requests a "groups" scope, which the Keycloak client doesn't have. The groups claim comes from the client's mapper.
+    scope: openid email profile
+    email-domain: "*"
+    # Only answer Traefik ForwardAuth requests, the protected app does the actual proxying.
+    upstream: static://202
+    reverse-proxy: "true"
+    skip-provider-button: "true"
+
+plex-media-server:
+  fullnameOverride: plex
+
+  service:
+    type: LoadBalancer
+    port: 32400
+
+    # Optional extra annotations to add to the service resource
+    annotations:
+      io.cilium/lb-ipam-ips: 192.168.102.32
+
+  pms:
+    # The storage class to use when provisioning the pms config volume,
+    # this needs to be created manually, null will use the default.
+    storageClassName: ssd-retain
+    # The volume size to provision for the PMS database.
+    configStorage: 10Gi
+    # Add a startup probe. This can be used to delay the liveness probe
+    # until PMS has finished DB migrations and prevent restarts.
+    # Up to 30 minutes to start, as Plex can run long database migrations after an update.
+    startupProbe:
+      httpGet:
+        path: /identity
+        port: 32400
+      periodSeconds: 10
+      failureThreshold: 180
+
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube.
+    resources:
+      requests:
+        cpu: 250m
+      limits:
+        cpu: "2"
+
+    # Security context applied to the PMS *container*. Use this for
+    # container-level fields such as `privileged`, `capabilities`,
+    # `readOnlyRootFilesystem` and `allowPrivilegeEscalation`.
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+        add:
+        - CHOWN
+        - DAC_OVERRIDE
+        - FOWNER
+        - SETUID
+        - SETGID
+      seccompProfile:
+        type: RuntimeDefault
+
+  extraEnv:
+    TZ: Europe/Amsterdam
+    ADVERTISE_IP: http://192.168.102.32:32400
+
+  # Common Labels for all resources created by this chart.
+  # The media volume is ReadWriteOnce, so all pods using it have to run on the same node.
+  commonLabels:
+    media/shared-volume: "true"
+  affinity: *mediaAffinity
+
+  # Optionally specify additional volumes for the pod.
+  extraVolumes:
+  - name: media
+    persistentVolumeClaim:
+      claimName: media
+  # Optionally specify additional volume mounts for the PMS and init containers.
+  extraVolumeMounts:
+  - name: media
+    mountPath: /data
+    # Read-only, Plex doesn't need to change the library.
+    readOnly: true
+
+prowlarr:
+  fullnameOverride: prowlarr
+
+  service:
+    port: 80
+
+  # Creating PVC to store configuration.
+  config:
+    persistence:
+      # Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided.
+      storageClass: ssd-retain
+      # Size of persistent disk.
+      size: 1Gi
+
+  serviceAccount:
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: false
+
+  # Environment variables to add to the prowlarr pods.
+  extraEnv:
+  - name: TZ
+    value: Europe/Amsterdam
+  # Login is handled by Keycloak in front of the ingress.
+  - name: PROWLARR__AUTH__METHOD
+    value: External
+  - name: PROWLARR__AUTH__REQUIRED
+    value: DisabledForLocalAddresses
+
+qbittorrent:
+  qbittorrent:
+    fullnameOverride: qbittorrent
+
+    service:
+      web:
+        port: 80
+
+    # Creating PVC to store configuration.
+    config:
+      persistence:
+        # Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided.
+        storageClass: ssd-retain
+        # Size of persistent disk.
+        size: 1Gi
+
+    serviceAccount:
+      # Automatically mount a ServiceAccount's API credentials?
+      automount: false
+
+    # Environment variables to add to the qbittorrent pods.
+    extraEnv:
+    - name: TZ
+      value: Europe/Amsterdam
+
+    podLabels:
+      media/shared-volume: "true"
+    affinity: *mediaAffinity
+
+    # Additional volumes on the output Deployment definition.
+    volumes: *mediaVolumes
+    # Additional volumeMounts on the output Deployment definition.
+    volumeMounts: *mediaVolumeMounts
+
+    # Extra containers to add to qbittorrent deployment.
+    # The chart has no option for the qBittorrent config, so a sidecar applies the preferences of the
+    # qbittorrent-preferences ConfigMap (templates/qbittorrent-preferences.yaml) through the WebUI API on start.
+    extraContainers:
+    - name: preferences
+      image: docker.io/curlimages/curl:8.14.1
+      command: [sh, -ec]
+      args:
+      - |
+        until curl -fs -o /dev/null http://localhost:8080/api/v2/app/version; do sleep 5; done
+        curl -fsS --data-urlencode "json=$PREFERENCES" http://localhost:8080/api/v2/app/setPreferences
+        while true; do sleep 86400; done
+      env:
+      - name: PREFERENCES
+        valueFrom:
+          configMapKeyRef:
+            name: qbittorrent-preferences
+            key: preferences.json
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+
+    # Gluetun sidecar.
+    # All traffic of qBittorrent goes through the VPN.
+    gluetun:
+      enabled: true
+
+      extraEnv:
+      - name: FIREWALL_INPUT_PORTS
+        value: "8080"
+      # Pod and service CIDRs of the cluster, so qBittorrent stays reachable for the other apps.
+      # The IPv6 service CIDR is left out, Gluetun fails to add a route for it ("no route to host").
+      - name: FIREWALL_OUTBOUND_SUBNETS
+        value: 10.52.0.0/16,10.53.0.0/16,2001:cafe:52::/56
+      # The server list built into the image gets outdated, after which no tunnel can be set up.
+      - name: UPDATER_PERIOD
+        value: 24h
+
+      # Secret with VPN_SERVICE_PROVIDER, VPN_TYPE and the credentials of the provider.
+      extraEnvFrom:
+      - secretRef:
+          name: vpn-credentials
+
+radarr:
+  fullnameOverride: radarr
+
+  service:
+    port: 80
+
+  # Creating PVC to store configuration.
+  config:
+    persistence:
+      # Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided.
+      storageClass: ssd-retain
+      # Size of persistent disk.
+      size: 2Gi
+
+  serviceAccount:
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: false
+
+  # Environment variables to add to the radarr pods.
+  extraEnv:
+  - name: TZ
+    value: Europe/Amsterdam
+  - name: RADARR__AUTH__METHOD
+    value: External
+  - name: RADARR__AUTH__REQUIRED
+    value: DisabledForLocalAddresses
+
+  podLabels:
+    media/shared-volume: "true"
+  affinity: *mediaAffinity
+
+  # Additional volumes on the output Deployment definition.
+  volumes: *mediaVolumes
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts: *mediaVolumeMounts
+
+# Request management, it has its own login (Plex), so it is not behind the Keycloak login.
+seerr-chart:
+  fullnameOverride: seerr
+
+  service:
+    port: 80
+
+  # Creating PVC to store configuration.
+  config:
+    persistence:
+      # Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided.
+      storageClass: ssd-retain
+      # Size of persistent disk.
+      size: 1Gi
+
+  probes:
+    # Configure startup probe.
+    # Up to 5 minutes to start, e.g. for database migrations.
+    startupProbe:
+      httpGet:
+        path: /api/v1/settings/public
+        port: http
+      periodSeconds: 10
+      failureThreshold: 30
+
+  serviceAccount:
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: false
+
+  # Environment variables to add to the seerr pods.
+  extraEnv:
+  - name: TZ
+    value: Europe/Amsterdam
+
+sonarr:
+  fullnameOverride: sonarr
+
+  service:
+    port: 80
+
+  # Creating PVC to store configuration.
+  config:
+    persistence:
+      # Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided.
+      storageClass: ssd-retain
+      # Size of persistent disk.
+      size: 2Gi
+
+  serviceAccount:
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: false
+
+  # Environment variables to add to the sonarr pods.
+  extraEnv:
+  - name: TZ
+    value: Europe/Amsterdam
+  - name: SONARR__AUTH__METHOD
+    value: External
+  - name: SONARR__AUTH__REQUIRED
+    value: DisabledForLocalAddresses
+
+  podLabels:
+    media/shared-volume: "true"
+  affinity: *mediaAffinity
+
+  # Additional volumes on the output Deployment definition.
+  volumes: *mediaVolumes
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts: *mediaVolumeMounts

@@ -1,0 +1,87 @@
+---
+- name: Check the GPU settings
+  ansible.builtin.assert:
+    that:
+      - proxmox_gpu_pci_ids | length > 0
+    fail_msg: Set proxmox_gpu_pci_ids, see the README.
+    quiet: true
+
+# The file /etc/kernel/cmdline also exists on ZFS hosts that boot with GRUB.
+- name: Read the boot loader configuration
+  ansible.builtin.command: proxmox-boot-tool status
+  register: proxmox_gpu_boot_status
+  changed_when: false
+  failed_when: false
+
+- name: Set the boot loader facts
+  ansible.builtin.set_fact:
+    proxmox_gpu_boot_tool: "{{ 'is configured with' in proxmox_gpu_boot_status.stdout }}"
+    proxmox_gpu_systemd_boot: "{{ 'is configured with: uefi' in proxmox_gpu_boot_status.stdout }}"
+
+- name: Set the kernel parameters
+  ansible.builtin.set_fact:
+    proxmox_gpu_kernel_params: "{{ (['intel_iommu=on'] if 'GenuineIntel' in ansible_facts.processor else []) + ['iommu=pt'] + (['video=vesafb:off,efifb:off'] if proxmox_gpu_disable_framebuffer else []) + (['pcie_acs_override=downstream,multifunction'] if proxmox_gpu_acs_override else []) + (['transparent_hugepage=never'] if proxmox_gpu_disable_thp else []) }}"
+
+- name: Add the kernel parameters to the GRUB command line
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^(GRUB_CMDLINE_LINUX_DEFAULT=")(?!.*\b{{ item }}\b)(.*)"$'
+    line: '\1\2 {{ item }}"'
+    backrefs: true
+  loop: "{{ proxmox_gpu_kernel_params }}"
+  when: not proxmox_gpu_systemd_boot
+  notify:
+    - Update boot configuration
+    - Reboot required
+
+- name: Add the kernel parameters to the systemd-boot command line
+  ansible.builtin.lineinfile:
+    path: /etc/kernel/cmdline
+    regexp: '^(?!.*\b{{ item }}\b)(.*\S)\s*$'
+    line: '\1 {{ item }}'
+    backrefs: true
+  loop: "{{ proxmox_gpu_kernel_params }}"
+  when: proxmox_gpu_systemd_boot
+  notify:
+    - Update boot configuration
+    - Reboot required
+
+- name: Load the VFIO modules
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: "{{ item }}"
+  loop:
+    - vfio
+    - vfio_iommu_type1
+    - vfio_pci
+  notify:
+    - Update initramfs
+    - Reboot required
+
+- name: Bind the GPU to vfio-pci
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/vfio.conf
+    content: |
+      options vfio-pci ids={{ proxmox_gpu_pci_ids | join(',') }}
+    mode: "0644"
+  notify:
+    - Update initramfs
+    - Reboot required
+
+- name: Keep the GPU drivers off the GPU on the host
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/blacklist-gpu.conf
+    content: "{% for module in proxmox_gpu_blacklist %}blacklist {{ module }}\n{% endfor %}"
+    mode: "0644"
+  notify:
+    - Update initramfs
+    - Reboot required
+
+# The previous name of the file above, from when only NVIDIA GPUs were supported.
+- name: Remove the old NVIDIA blacklist file
+  ansible.builtin.file:
+    path: /etc/modprobe.d/blacklist-nvidia.conf
+    state: absent
+  notify:
+    - Update initramfs
+    - Reboot required

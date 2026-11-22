@@ -1,0 +1,12 @@
+{{- $oauth := index .Values "oauth2-proxy" }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: keycloak-auth
+spec:
+  forwardAuth:
+    address: http://{{ $oauth.fullnameOverride }}.{{ .Release.Namespace }}.svc:80
+    trustForwardHeader: true
+    authResponseHeaders:
+    - X-Auth-Request-User
+    - X-Auth-Request-Email
