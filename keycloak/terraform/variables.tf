@@ -40,11 +40,13 @@ variable "smtp_password" {
 
 variable "keycloak_clients" {
   type = list(object({
-    client_id             = string
-    name                  = string
-    redirect_uri          = string
-    web_origin            = string
-    access_token_lifespan = optional(string)
+    client_id                = string
+    name                     = string
+    redirect_uri             = string
+    web_origin               = string
+    access_token_lifespan    = optional(string)
+    additional_redirect_uris = optional(list(string), [])
+    additional_web_origins   = optional(list(string), [])
   }))
   description = "Keycloak clients"
   sensitive   = true

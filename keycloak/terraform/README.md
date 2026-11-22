@@ -17,3 +17,20 @@ terraform plan -var-file=variables.tfvars
   1. Uncomment the `backend "s3"` block in `terraform.tf`.
   1. Run `terraform init -backend-config=backend.conf -migrate-state` to migrate the state from the local backend to the S3 backend.
   1. You can now safely remove the `terraform.tfstate` and `terraform.tfstate.backup` files.
+
+Clients:
+
+- `media` (used by the [media](../../media/README.md) chart) has to be added to `keycloak_clients`:
+
+```hcl
+{
+  client_id    = "media"
+  name         = "Media"
+  redirect_uri = "https://<global.oauth2ProxyIngressHost>/oauth2/callback"
+  web_origin   = "https://<global.oauth2ProxyIngressHost>"
+
+  # Jellyfin signs in through its SSO plugin with this client as well, `keycloak` is the provider name set in the plugin.
+  additional_redirect_uris = ["https://<media.ingressHosts.jellyfin>/sso/OID/redirect/keycloak"]
+  additional_web_origins   = ["https://<media.ingressHosts.jellyfin>"]
+}
+```

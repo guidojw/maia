@@ -1,0 +1,19 @@
+---
+# Kernel drivers kept off the GPU on the host.
+proxmox_gpu_blacklist:
+  - nouveau
+  - nvidia
+  - nvidiafb
+
+# Needed when the GPU is also the primary graphics of the host, as the boot framebuffer holds on to it.
+proxmox_gpu_disable_framebuffer: false
+
+# Splits IOMMU groups in software, for devices that share a group with the GPU, which removes the isolation between them.
+proxmox_gpu_acs_override: false
+
+# Turns off the transparent huge pages of the host, for a GPU whose DMA the IOMMU blocks (DMAR faults "non-zero reserved fields in PTE").
+# TODO: Verify over a longer time that the faults are gone, one short burst of about 150 was logged 2 hours after turning THP off.
+# To verify, after some days of use with transcodes and without a reboot, run on the Proxmox host
+# `grep -o transparent_hugepage=never /proc/cmdline; uptime -p; dmesg | grep -c "DMAR.*01:00.0"`, the count should be 0.
+# Prompt: "Verify the THP TODO: pleiades shows <output>, check the GPU on the maia node and update the notes." Then remove this TODO.
+proxmox_gpu_disable_thp: false

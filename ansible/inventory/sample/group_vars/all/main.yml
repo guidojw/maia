@@ -8,3 +8,6 @@ proxmox_csi_user: "user"
 proxmox_csi_secret: "secret"
 
 vlan10_ipv6_gateway: "ip_address"
+
+# Install the NVIDIA driver and container toolkit for hardware transcoding, see the README.
+nvidia_gpu: false

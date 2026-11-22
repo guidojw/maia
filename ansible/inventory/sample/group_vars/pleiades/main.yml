@@ -1,0 +1,9 @@
+proxmox_gpu_pci_ids:
+  - "gpu_id"
+  - "audio_id"
+# For a GPU that is also the primary graphics of the host, see the README:
+# proxmox_gpu_disable_framebuffer: true
+# For a device that shares an IOMMU group with the GPU, see the README:
+# proxmox_gpu_acs_override: true
+# For a GPU whose DMA the IOMMU blocks, see the README:
+# proxmox_gpu_disable_thp: true

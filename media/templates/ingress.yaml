@@ -1,0 +1,52 @@
+{{- define "media.route" -}}
+{{- if .host }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .name }}-ingress
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .host }}`)
+    kind: Rule
+    {{- if .auth }}
+    middlewares:
+    - name: keycloak-auth
+    {{- end }}
+    services:
+    - name: {{ .service }}
+      port: {{ .port }}
+  tls:
+    secretName: {{ .name }}-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .name }}-cert
+spec:
+  secretName: {{ .name }}-cert
+  dnsNames:
+  - "{{ .host }}"
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+{{- end }}
+{{- end }}
+
+{{- $plex := index .Values "plex-media-server" }}
+{{- $seerr := index .Values "seerr-chart" }}
+{{- $jellyfin := .Values.jellyfin }}
+{{- /* Plex, Jellyfin and Seerr handle their own login, and the Plex and Jellyfin clients can't follow the Keycloak redirect. */}}
+{{- $oauth := index .Values "oauth2-proxy" }}
+{{- $hosts := .Values.media.ingressHosts }}
+{{- include "media.route" (dict "name" "plex" "host" $hosts.plex "service" $plex.fullnameOverride "port" $plex.service.port) }}
+{{- include "media.route" (dict "name" "seerr" "host" $hosts.seerr "service" $seerr.fullnameOverride "port" $seerr.service.port) }}
+{{- include "media.route" (dict "name" "jellyfin" "host" $hosts.jellyfin "service" $jellyfin.fullnameOverride "port" $jellyfin.service.port) }}
+{{- include "media.route" (dict "name" "oauth2-proxy" "host" .Values.global.oauth2ProxyIngressHost "service" $oauth.fullnameOverride "port" 80) }}
+{{- include "media.route" (dict "name" "qbittorrent" "host" $hosts.qbittorrent "service" (printf "%s-web" .Values.qbittorrent.qbittorrent.fullnameOverride) "port" .Values.qbittorrent.qbittorrent.service.web.port "auth" true) }}
+{{- range $name := list "prowlarr" "sonarr" "radarr" "bazarr" }}
+{{- $app := index $.Values $name }}
+{{- include "media.route" (dict "name" $name "host" (index $hosts $name) "service" $app.fullnameOverride "port" $app.service.port "auth" true) }}
+{{- end }}

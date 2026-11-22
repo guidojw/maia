@@ -1,0 +1,6 @@
+---
+- name: Set up GPU passthrough on Proxmox
+  hosts: pleiades
+  become: true
+  roles:
+    - role: proxmox_gpu_passthrough

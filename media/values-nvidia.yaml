@@ -1,0 +1,46 @@
+# Hardware transcoding on an NVIDIA GPU in the node, add it with -f media/values-nvidia.yaml, see the README.
+# The NVIDIA runtime hands the GPU to the pods that ask for it with NVIDIA_VISIBLE_DEVICES, there is no device plugin.
+# Lists replace those of values.yaml, so the ones set here are repeated in full.
+
+jellyfin:
+  # -- Define a custom runtimeClassName for the pod.
+  runtimeClassName: nvidia
+
+  jellyfin:
+    # -- Additional environment variables for the container.
+    # Example: Workaround for inotify limits (see Troubleshooting section in README)
+    # Example:
+    # env:
+    #   - name: JELLYFIN_CACHE_DIR
+    #     value: /cache
+    env:
+    - name: TZ
+      value: Europe/Amsterdam
+    - name: NVIDIA_VISIBLE_DEVICES
+      value: all
+    # Video is for NVENC and NVDEC, compute for tone mapping.
+    - name: NVIDIA_DRIVER_CAPABILITIES
+      value: compute,video,utility
+
+plex-media-server:
+  # -- Specify your own runtime class name eg use gpu
+  runtimeClassName: nvidia
+
+  # extraEnv:
+  # This claim is optional, and is only used for the first startup of PMS
+  # The claim is obtained from https://www.plex.tv/claim/ is is only valid for a few minutes
+  #   PLEX_CLAIM: "claim"
+  #   HOSTNAME: "PlexServer"
+  #   TZ: "Etc/UTC"
+  #   PLEX_UPDATE_CHANNEL: "5"
+  #   PLEX_UID: "uid of plex user"
+  #   PLEX_GID: "group id of plex user"
+  # a list of CIDRs that can use the server without authentication
+  # this is only used for the first startup of PMS
+  #   ALLOWED_NETWORKS: "0.0.0.0/0"
+  extraEnv:
+    NVIDIA_VISIBLE_DEVICES: all
+    # Video is for NVENC and NVDEC, compute for tone mapping.
+    NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
+    # Without it the Plex transcoder fails with "Cannot load libcuda.so.1", as the Debian driver puts the libraries here.
+    LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu/nvidia/current

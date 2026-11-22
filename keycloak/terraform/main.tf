@@ -37,13 +37,15 @@ resource "keycloak_openid_client" "clients" {
   standard_flow_enabled = true
   access_token_lifespan = local.keycloak_clients[each.key].access_token_lifespan
 
-  valid_redirect_uris = [
-    local.keycloak_clients[each.key].redirect_uri
-  ]
+  valid_redirect_uris = concat(
+    [local.keycloak_clients[each.key].redirect_uri],
+    local.keycloak_clients[each.key].additional_redirect_uris
+  )
 
-  web_origins = [
-    local.keycloak_clients[each.key].web_origin
-  ]
+  web_origins = concat(
+    [local.keycloak_clients[each.key].web_origin],
+    local.keycloak_clients[each.key].additional_web_origins
+  )
 }
 
 resource "keycloak_group" "storage_admins" {
@@ -51,9 +53,32 @@ resource "keycloak_group" "storage_admins" {
   name     = "storage-admins"
 }
 
+resource "keycloak_group" "media_users" {
+  realm_id = keycloak_realm.homelab_realm.id
+  name     = "media-users"
+}
+
+resource "keycloak_group" "media_admins" {
+  realm_id = keycloak_realm.homelab_realm.id
+  name     = "media-admins"
+}
+
 resource "keycloak_openid_group_membership_protocol_mapper" "group_mapper" {
   realm_id  = keycloak_realm.homelab_realm.id
   client_id = keycloak_openid_client.clients["seaweedfs-admin"].id
+  name      = "group-membership-mapper"
+
+  claim_name = "groups"
+  full_path  = false
+
+  add_to_id_token     = true
+  add_to_access_token = true
+  add_to_userinfo     = true
+}
+
+resource "keycloak_openid_group_membership_protocol_mapper" "media_group_mapper" {
+  realm_id  = keycloak_realm.homelab_realm.id
+  client_id = keycloak_openid_client.clients["media"].id
   name      = "group-membership-mapper"
 
   claim_name = "groups"
