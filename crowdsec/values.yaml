@@ -260,6 +260,8 @@ engine:
       - namespace: traefik
         podName: traefik-*
         program: traefik
+        # If set to true, will poll the files using os.Stat instead of using inotify
+        poll_without_inotify: true
 
     # -- Extra init containers to be added to agent pods
     ## @param agent.extraInitContainers [array] Extra init containers for agent pods
