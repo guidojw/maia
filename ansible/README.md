@@ -72,6 +72,8 @@ Set `nvidia_gpu: true` in `inventory/my_cluster/group_vars/all/main.yml` to inst
 
 Pass the GPU through to the node first, for a Proxmox VM see [Proxmox GPU passthrough](#proxmox-gpu-passthrough-optional), the kernel module loads when the GPU shows up. Then check on the node that `nvidia-smi` lists the GPU.
 
+The role also installs and enables the NVIDIA persistence daemon (`nvidia-persistenced`), which keeps the driver initialised while no process uses the GPU. Without it the driver releases the GPU when the last process closes it and sets it up again on the next use, which can leave the card in a higher power state when idle. Check it on the node with `systemctl status nvidia-persistenced` and `nvidia-smi --query-gpu=persistence_mode,pstate,power.draw --format=csv`, which should show `Enabled` and a low power state (`P8`) with a low draw when no transcode runs.
+
 The driver is the one of Debian (`nvidia-kernel-dkms`, built for the running kernel with the matching headers), so it has to support the GPU. It built and loaded on the Debian cloud kernel (`6.1.0-56-cloud`, Debian 12, driver `535.309.01`) of the tested node. If it doesn't build or load on yours, use the standard kernel instead (`linux-image-amd64`), which the playbooks don't install.
 
 # HBA temperature
