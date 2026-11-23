@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>guidojw/.github"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["helmv3"],
+      "matchFileNames": ["media/Chart.yaml"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "media chart dependencies"
+    }
   ]
 }
