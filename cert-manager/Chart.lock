@@ -2,5 +2,8 @@ dependencies:
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.19.3
-digest: sha256:114cb3c074866dd41725580ac14367f0aa03653f362ae156430f1dc0ee6ddd32
-generated: "2026-02-09T23:40:14.50178059Z"
+- name: cert-manager-webhook-transip
+  repository: https://demeester.dev/cert-manager-webhook-transip
+  version: 0.1.4
+digest: sha256:1e3c5a3cba8b4ee71e992a84683a98620c11bfe1d9876ca41bc71ca6300073c0
+generated: "2026-10-18T20:34:02.528585602+02:00"
