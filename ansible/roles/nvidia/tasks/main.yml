@@ -58,7 +58,15 @@
       - libnvidia-encode1
       - libnvcuvid1
       - nvidia-vdpau-driver
+      # Keeps the driver initialised while no process uses the GPU, so it can idle in its low power state.
+      - nvidia-persistenced
     install_recommends: false
+
+- name: Start the NVIDIA persistence daemon
+  ansible.builtin.systemd:
+    name: nvidia-persistenced
+    enabled: true
+    state: started
 
 # K3s finds the nvidia runtime of this package only when it starts.
 - name: Install the NVIDIA Container Toolkit
