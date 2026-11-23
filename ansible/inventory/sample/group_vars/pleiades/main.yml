@@ -7,3 +7,5 @@ proxmox_gpu_pci_ids:
 # proxmox_gpu_acs_override: true
 # For a GPU whose DMA the IOMMU blocks, see the README:
 # proxmox_gpu_disable_thp: true
+# For the temperature of the LSI HBA, which needs a newer kernel, see the README:
+# proxmox_newer_kernel: true

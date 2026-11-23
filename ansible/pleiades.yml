@@ -4,3 +4,16 @@
   become: true
   roles:
     - role: proxmox_gpu_passthrough
+
+- name: Install lm-sensors on Proxmox
+  hosts: pleiades
+  become: true
+  roles:
+    - role: lm_sensors
+
+- name: Install a newer kernel on Proxmox
+  hosts: pleiades
+  become: true
+  roles:
+    - role: proxmox_kernel
+      when: proxmox_newer_kernel | default(false)

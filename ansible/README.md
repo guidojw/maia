@@ -18,7 +18,7 @@ ansible-galaxy install -r collections/requirements.txt
 
 # Run playbook
 
-The machines have their own playbooks, `site.yml` sets up the `maia` VM (network, K3s, the optional NVIDIA GPU and the cluster settings). The Proxmox host `pleiades` has its own, see [Proxmox GPU passthrough](#proxmox-gpu-passthrough-optional).
+The machines have their own playbooks, `site.yml` sets up the `maia` VM (network, K3s, the optional NVIDIA GPU and the cluster settings). The Proxmox host `pleiades` has its own, see [Proxmox GPU passthrough](#proxmox-gpu-passthrough-optional) and [HBA temperature](#hba-temperature).
 
 Run the playbook with:
 
@@ -73,3 +73,15 @@ Set `nvidia_gpu: true` in `inventory/my_cluster/group_vars/all/main.yml` to inst
 Pass the GPU through to the node first, for a Proxmox VM see [Proxmox GPU passthrough](#proxmox-gpu-passthrough-optional), the kernel module loads when the GPU shows up. Then check on the node that `nvidia-smi` lists the GPU.
 
 The driver is the one of Debian (`nvidia-kernel-dkms`, built for the running kernel with the matching headers), so it has to support the GPU. It built and loaded on the Debian cloud kernel (`6.1.0-56-cloud`, Debian 12, driver `535.309.01`) of the tested node. If it doesn't build or load on yours, use the standard kernel instead (`linux-image-amd64`), which the playbooks don't install.
+
+# HBA temperature
+
+The `lm_sensors` role of `pleiades.yml` installs `lm-sensors` on the Proxmox host. From Linux 7.3 the `mpt3sas` driver of an LSI/Broadcom SAS HBA exposes the chip temperature as an hwmon sensor, so `sensors` lists it without a Broadcom tool:
+
+```sh
+sensors mpt3sas-pci-*
+```
+
+The host kernel has to be 7.3 or newer, the default Proxmox kernel is older and does not have it, so `sensors` shows no HBA until the kernel is upgraded. Set `proxmox_newer_kernel: true` in `inventory/my_cluster/group_vars/pleiades/main.yml` and run `ansible-playbook -K pleiades.yml` to install `proxmox-kernel-7.3` (`proxmox_kernel_package`) from the Proxmox repository. It is in `pve-no-subscription`, which has to be enabled, and is not the default kernel of Proxmox VE 9.2. It is installed next to the current kernel, which stays. The newest installed kernel is the default boot entry, so the host uses it at its next reboot. The role does not reboot, as that stops the VMs.
+
+To try it once, run `proxmox-boot-tool kernel list`, then `proxmox-boot-tool kernel pin <version> --next-boot` with the new version and reboot, so a kernel that does not boot is replaced by the old one at the next power cycle (the option is from memory, check `proxmox-boot-tool help`). A kernel that does not boot or bring up the network needs a monitor and keyboard at the host to pick the old one. Check the running kernel with `uname -r`, `zpool status`, the GPU passthrough and the sensor with `grep -l mpt3sas /sys/class/hwmon/*/name`. To keep the new kernel, `proxmox-boot-tool kernel pin <version>`, to go back `proxmox-boot-tool kernel unpin` after pinning the old version. The driver only registers the sensor when the card reports a temperature. The LSI HBA of this setup does, `sensors` lists its `IOC` (chip) temperature and no board temperature.

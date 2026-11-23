@@ -1,0 +1,3 @@
+---
+# Kernel package of the Proxmox repository, installed next to the running kernel and not removed.
+proxmox_kernel_package: proxmox-kernel-7.3
