@@ -28,6 +28,6 @@ dependencies:
   version: 3.10.0
 - name: sonarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 2.2.3
-digest: sha256:9d88c1643687464d0c1b1576b7846f3abaa333a88ad5cdcb58856382cefb6add
-generated: "2026-10-14T22:04:24.315583978+02:00"
+  version: 2.4.0
+digest: sha256:b38709000cf6bcf7391f5c3bd7a766ccdf054559afd8443c4422cc5615fd84e1
+generated: "2026-11-23T17:01:26.721235882Z"
