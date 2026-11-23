@@ -1,0 +1,5 @@
+---
+# The mpt3sas driver exposes the temperature of the LSI HBA as an hwmon sensor from Linux 7.3, which sensors lists.
+- name: Install lm-sensors
+  ansible.builtin.apt:
+    name: lm-sensors

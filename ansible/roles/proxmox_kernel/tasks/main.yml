@@ -1,0 +1,8 @@
+---
+# The newest installed kernel is the default boot entry, so the host uses it at its next reboot. The role does not reboot,
+# as that stops the VMs.
+- name: Install the Proxmox kernel
+  ansible.builtin.apt:
+    name: "{{ proxmox_kernel_package }}"
+    update_cache: true
+    cache_valid_time: 3600
