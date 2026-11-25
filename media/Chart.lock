@@ -1,33 +1,33 @@
 dependencies:
 - name: bazarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 2.3.2
+  version: 2.5.0
 - name: flaresolverr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 2.4.1
+  version: 2.6.0
 - name: jellyfin
   repository: https://jellyfin.github.io/jellyfin-helm
-  version: 3.2.0
+  version: 3.7.0
 - name: oauth2-proxy
   repository: https://oauth2-proxy.github.io/manifests
-  version: 10.7.1
+  version: 10.7.4
 - name: plex-media-server
   repository: https://raw.githubusercontent.com/plexinc/pms-docker/gh-pages
   version: 1.9.0
 - name: prowlarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 3.8.5
+  version: 3.11.0
 - name: qbittorrent
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 7.1.3
+  version: 7.5.1
 - name: radarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 3.6.4
+  version: 3.8.0
 - name: seerr-chart
   repository: oci://ghcr.io/seerr-team/seerr
-  version: 3.10.0
+  version: 3.11.1
 - name: sonarr
   repository: oci://ghcr.io/m0nsterrr/helm-charts
-  version: 2.2.3
-digest: sha256:9d88c1643687464d0c1b1576b7846f3abaa333a88ad5cdcb58856382cefb6add
-generated: "2026-10-14T22:04:24.315583978+02:00"
+  version: 2.4.0
+digest: sha256:b26315eef7fc7630d1b534598c4b2fc247f05d5b49f9d0225a9029603025ff3c
+generated: "2026-11-25T00:04:37.282233872Z"
